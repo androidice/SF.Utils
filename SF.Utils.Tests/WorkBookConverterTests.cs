@@ -5,13 +5,13 @@ using SF.Utils.WorkBookConverter;
 
 namespace SF.Utils.Tests
 {
-    public class WorkBookTests
+    public class WorkBookConverterTests
     {
         /// <summary>
         /// Test the WorkBookConverter if can successfully convert .xlsx and .xls file
         /// </summary>
         [Fact]
-        public void Should_Convert_XLS_AND_XLSX_TO_DATA_TABLE()
+        public void CONVERT_XLS_AND_XLSX_TO_DATA_TABLE()
         {
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
 
@@ -32,7 +32,7 @@ namespace SF.Utils.Tests
         /// with row and col to start red the workbook
         /// </summary>
         [Fact]
-        public void Should_Convert_XLS_AND_XLSX_TO_DATA_TABLE_WITH_START_ROW_AND_COL_CONFIGURABLE()
+        public void CONVERT_XLS_AND_XLSX_TO_DATA_TABLE_WITH_START_ROW_AND_COL_CONFIGURABLE()
         {
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
 

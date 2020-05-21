@@ -1,0 +1,8 @@
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.deps.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.csproj.CoreCompileInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.AssemblyInfoInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.AssemblyInfo.cs
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.pdb

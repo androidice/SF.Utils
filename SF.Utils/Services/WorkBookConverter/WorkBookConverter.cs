@@ -37,13 +37,16 @@ namespace SF.Utils.WorkBookConverter
                         {
                             ICell cell = row.GetCell(colIndex);
                             if (cell != null) {
-                                string cellValue = string.Empty;
-                                string colName = result.Columns[tableColumnIndex].ToString(); // get data column name from datatable
+                                bool isColExists = result.Columns.Contains(tableColumnIndex.ToString());
+                                if (isColExists) {
+                                    string cellValue = string.Empty;
+                                    string colName = result.Columns[tableColumnIndex].ToString(); // get data column name from datatable
 
-                                cellValue = wbService.GetCellValue(cell); // get the cell value
+                                    cellValue = wbService.GetCellValue(cell); // get the cell value
 
-                                tempRow[colName] = cellValue;
-                                tableColumnIndex++;
+                                    tempRow[colName] = cellValue;
+                                    tableColumnIndex++;
+                                }
                             }
                         }
 
