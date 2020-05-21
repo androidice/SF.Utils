@@ -1,0 +1,14 @@
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\smartfactory.test.deps.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\smartfactory.test.runtimeconfig.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\smartfactory.test.runtimeconfig.dev.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\smartfactory.test.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\smartfactory.test.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\SF.Utils.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\bin\Debug\netcoreapp2.2\SF.Utils.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.csprojAssemblyReference.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.csproj.CoreCompileInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.AssemblyInfoInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.AssemblyInfo.cs
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.csproj.CopyComplete
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\smartfactory.test\obj\Debug\netcoreapp2.2\smartfactory.test.pdb

@@ -1,0 +1,8 @@
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\bin\Debug\netcoreapp2.2\SF.Utils.deps.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\bin\Debug\netcoreapp2.2\SF.Utils.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\bin\Debug\netcoreapp2.2\SF.Utils.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\obj\Debug\netcoreapp2.2\SF.Utils.csproj.CoreCompileInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\obj\Debug\netcoreapp2.2\SF.Utils.AssemblyInfoInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\obj\Debug\netcoreapp2.2\SF.Utils.AssemblyInfo.cs
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\obj\Debug\netcoreapp2.2\SF.Utils.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils\obj\Debug\netcoreapp2.2\SF.Utils.pdb
