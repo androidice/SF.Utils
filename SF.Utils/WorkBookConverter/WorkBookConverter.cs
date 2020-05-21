@@ -11,20 +11,20 @@ namespace SF.Utils.WorkBookConverter
     {
         private readonly ISFWorkBook wbService = new SFWorkBook.SFWorkBook();
 
-        public virtual DataTable ConvertWorkBookToDataTable(string path, int beginRow = 0, int beginCol = 0, int headerIndex = 0, bool useWorkBookTitle = false)
+        public virtual DataTable ConvertWorkBookToDataTable(string path, int beginRow = 0, int beginCol = 0)
         {
             IWorkbook wb = wbService.ReadWorkBook(path); // read the workbook
             int noOfSheets = wb.NumberOfSheets; // get the number of sheets;
             DataTable result = new DataTable();
 
-            InitializeHeaders(result, beginCol, headerIndex, useWorkBookTitle, wb);// initialize DataTable headers from excell header
+            InitializeHeaders(result, beginRow, beginCol, wb);// initialize DataTable headers from excell header
 
             for (var index = 0; index < noOfSheets; index++)
             {
                 ISheet sheet = wb.GetSheetAt(index);
                 int noOfRows = sheet.LastRowNum;
                 noOfRows = noOfRows + beginRow ;
-                for (var rowIndex = beginRow; rowIndex < noOfRows; rowIndex++)
+                for (var rowIndex = beginRow; rowIndex <= noOfRows; rowIndex++)
                 {
                     IRow row = sheet.GetRow(rowIndex);
                     if (row != null) {
@@ -55,11 +55,10 @@ namespace SF.Utils.WorkBookConverter
             return result;
         }
 
-
-        public virtual void InitializeHeaders(DataTable dt, int beginCol, int headerIndex, bool useWorkBookTitle, IWorkbook wb)
+        public virtual void InitializeHeaders(DataTable dt, int beginRow, int beginCol, IWorkbook wb)
         {
             ISheet headerSheet = wb.GetSheetAt(0);
-            IRow headerRow = headerSheet.GetRow(headerIndex);
+            IRow headerRow = headerSheet.GetRow(beginRow);
             int noOfCols = headerRow.Cells.Count;
             noOfCols = (noOfCols + beginCol);
 
@@ -70,32 +69,14 @@ namespace SF.Utils.WorkBookConverter
                 ICell cell = headerRow.GetCell(colIndex);
                 if (cell != null)
                 {
-                    string colName = string.Empty;
-                    if (useWorkBookTitle)
+                    string colName = columnIndex.ToString();
+                    dt.Columns.Add(new DataColumn()
                     {
-                        colName = wbService.GetCellValue(cell);
-                        bool isColExists = dt.Columns.Contains(colName);
-                        if (!isColExists)
-                        {
-                            dt.Columns.Add(new DataColumn()
-                            {
-                                ColumnName = colName
-                            });
-                        }
-                    }
-                    else
-                    {
-                        colName = columnIndex.ToString();
-                        dt.Columns.Add(new DataColumn()
-                        {
-                            ColumnName = colName
-                        });
-                        columnIndex++;
-                    }
+                        ColumnName = colName
+                    });
+                    columnIndex++;
                 }
             }
         }
-
-        
     }
 }

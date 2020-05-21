@@ -18,13 +18,26 @@ namespace SF.Utils.Tests
             /**
              * Convert the whole .xlsx file to data table
              */
-            DataTable dt = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50.xlsx");
-
-
+            var result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50.xlsx");
+            Assert.IsType<DataTable>(result);
             /**
              * Convert the whole .xls file to data table
              */
-            dt = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50.xls");
+            result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50.xls");
+            Assert.IsType<DataTable>(result);
+        }
+
+        /// <summary>
+        /// Test the WorkBookConverter if can successfully convert .xlsx and .xls file
+        /// with row and col to start red the workbook
+        /// </summary>
+        [Fact]
+        public void Should_Convert_XLS_AND_XLSX_TO_DATA_TABLE_WITH_START_ROW_AND_COL_CONFIGURABLE()
+        {
+            IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
+
+            var result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50_1.xlsx", 6,2);
+            Assert.IsType<DataTable>(result);
         }
     }
 }
