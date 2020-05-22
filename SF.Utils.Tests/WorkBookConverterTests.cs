@@ -25,6 +25,7 @@ namespace SF.Utils.Tests
              */
             result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50.xls");
             Assert.IsType<DataTable>(result);
+            Assert.Equal(51, result.Rows.Count);//current test file contains 51 rows
         }
 
         /// <summary>
@@ -38,6 +39,7 @@ namespace SF.Utils.Tests
 
             var result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50_1.xlsx", 6,2);
             Assert.IsType<DataTable>(result);
+            Assert.Equal(51, result.Rows.Count);
         }
     }
 }

@@ -6,3 +6,4 @@ C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Deb
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.AssemblyInfo.cs
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.dll
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.csprojAssemblyReference.cache

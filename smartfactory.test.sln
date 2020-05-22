@@ -7,9 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "smartfactory.test", "smartf
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SF.Utils", "SF.Utils\SF.Utils.csproj", "{FAA8BDA2-F9E3-4FEE-984D-C087F54A5943}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SF.Utils.Tests", "SF.Utils.Tests\SF.Utils.Tests.csproj", "{884C8F0C-FA99-436F-AA19-D09B83005EF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SF.Utils.Tests", "SF.Utils.Tests\SF.Utils.Tests.csproj", "{884C8F0C-FA99-436F-AA19-D09B83005EF4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SF.AttendanceManagement", "SF.AttendanceManagement\SF.AttendanceManagement.csproj", "{988B249D-BB62-4D94-BF0C-33257FBAFE05}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SF.AttendanceManagement", "SF.AttendanceManagement\SF.AttendanceManagement.csproj", "{988B249D-BB62-4D94-BF0C-33257FBAFE05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SF.DataAccess", "SF.DataAccess\SF.DataAccess.csproj", "{3E6DFD86-8FAF-411B-A16A-6FB5B195D645}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{988B249D-BB62-4D94-BF0C-33257FBAFE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{988B249D-BB62-4D94-BF0C-33257FBAFE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{988B249D-BB62-4D94-BF0C-33257FBAFE05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E6DFD86-8FAF-411B-A16A-6FB5B195D645}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E6DFD86-8FAF-411B-A16A-6FB5B195D645}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E6DFD86-8FAF-411B-A16A-6FB5B195D645}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E6DFD86-8FAF-411B-A16A-6FB5B195D645}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

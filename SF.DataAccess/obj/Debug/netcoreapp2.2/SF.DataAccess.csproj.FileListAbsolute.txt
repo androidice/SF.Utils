@@ -1,0 +1,9 @@
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\bin\Debug\netcoreapp2.2\SF.DataAccess.deps.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\bin\Debug\netcoreapp2.2\SF.DataAccess.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\bin\Debug\netcoreapp2.2\SF.DataAccess.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.csproj.CoreCompileInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.AssemblyInfoInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.AssemblyInfo.cs
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.DataAccess\obj\Debug\netcoreapp2.2\SF.DataAccess.csprojAssemblyReference.cache
