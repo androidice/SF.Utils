@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Globalization;
 using System.Linq;
 using System.Collections.Generic;
@@ -172,6 +173,7 @@ namespace SF.AttendanceManagement
         {
 
         }
+
         public void ProcessMorningSchedule(decimal overtimeHours, DataRow empRow)
         {
             //shedule: "08:00:00-16:00:00";
@@ -204,11 +206,7 @@ namespace SF.AttendanceManagement
                 ICollection<DataTable> departmentRecords = new List<DataTable>();
                 foreach (string file in files)
                 {
-                    string fileName = file.Substring(file.LastIndexOf(@"\") + 1);
-                    fileName = fileName.Substring(0, fileName.LastIndexOf('.'));
-
                     DataTable records = ConvertDepartmentRecordsToDataTable(file);
-                    records.TableName = fileName;// set the department file name
                     departmentRecords.Add(records);
                 }
                 return departmentRecords;
@@ -261,7 +259,7 @@ namespace SF.AttendanceManagement
             {
                 foreach (string departmentFile in inputModel.DepartmentFilePaths)
                 {
-                    string fileName = departmentFile.Substring(departmentFile.LastIndexOf(@"\") + 1);
+                    string fileName = Path.GetFileName(departmentFile);
                     isValid = this.IsDepartmentFileValid(departmentFile, startDate, endDate);
 
                     if (!isValid)
@@ -316,8 +314,7 @@ namespace SF.AttendanceManagement
 
         public bool IsSettlementFileValid(string path)
         {
-            IWorkBookConverter workBookConverter = new WorkBookConverter();
-            var result = workBookConverter.ConvertWorkBookToDataTable(path, 2, 0);
+            var result = ConvertSettlementRecordsToDataTable(path);
 
             const int WEEKDAY_OT = 3;
             const int WEEKEND_OT = 4;
@@ -361,6 +358,10 @@ namespace SF.AttendanceManagement
                     columnName = WEEKEND_CARRYOVER_OT.ToString(),
                     expectedType = typeof(decimal)
                 }
+            }, new List<string>() {
+                "编制：张雪明",
+                "审核：",
+                "批准："
             });
 
             return isValid;
@@ -374,19 +375,27 @@ namespace SF.AttendanceManagement
             /*validate headers*/
             string[] separators = new string[] { "日期" };
             string[] headerSeparators = new string[] { "姓名" };
+            const int NAME_INDEX = 1;
             var headerRecords = result.AsEnumerable()
-                                .Where(row => headerSeparators.Any(x => x.TrimAllExtraSpace().Equals(row[0].ToString().TrimAllExtraSpace())));
+                                .Where(row => headerSeparators.Any(x => x.TrimAllExtraSpace().Equals(row[NAME_INDEX].ToString().TrimAllExtraSpace())));
+
+            ICollection<DataRow> headerRows = new List<DataRow>();
+            foreach (DataRow headerRow in headerRecords) {
+                int rowIndex = result.Rows.IndexOf(headerRow);
+                DataRow tempRow = result.Rows[rowIndex + 1];
+                headerRows.Add(tempRow);
+            }
 
 
             bool isValid = true;
-            isValid = (headerRecords != null && headerRecords.Count() > 0);
+            isValid = (headerRows.Count() > 0);
             if (isValid)
             {
 
-                foreach (var records in headerRecords)
+                foreach (var records in headerRows)
                 {
                     int dayResult = 0;
-                    int date_index = 1;
+                    int date_index = 2;
                     string rowValue = records[date_index].ToString();
                     isValid = Int32.TryParse(rowValue, out dayResult);
                     if (isValid)

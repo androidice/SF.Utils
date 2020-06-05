@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using SF.Utils.Extensions;
 
 using System.Globalization;
 
@@ -17,7 +18,7 @@ namespace SF.Utils.Validators
         /// <param name="table"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static bool ValidateColumn(this DataTable table, IList<DataColumnValidatorModel> param)
+        public static bool ValidateColumn(this DataTable table, IList<DataColumnValidatorModel> param, IList<string> inputExceptions = null)
         {
             bool isValid = true;
             foreach (DataRow row in table.Rows)
@@ -30,11 +31,11 @@ namespace SF.Utils.Validators
                     {
 
                         if (columnModel.expectedType.Equals(typeof(DateTime)))
-                            isValid = IsDateValueValid(row, columnModel);
+                            isValid = IsDateValueValid(row, columnModel, inputExceptions);
                         else if (columnModel.expectedType.Equals(typeof(Int32)))
-                            isValid = IsNumericValueValid(row, columnModel);
+                            isValid = IsNumericValueValid(row, columnModel, inputExceptions);
                         else if (columnModel.expectedType.Equals(typeof(Decimal)))
-                            isValid = IsDecimalValueValid(row, columnModel);
+                            isValid = IsDecimalValueValid(row, columnModel, inputExceptions);
                         //extend for other types and column that uses patterns
                     }
 
@@ -52,84 +53,121 @@ namespace SF.Utils.Validators
         /// <param name="row"></param>
         /// <param name="rowModel"></param>
         /// <returns></returns>
-        public static bool ValidateRow(this DataRow row, DataRowValidatorModel rowModel) {
+        public static bool ValidateRow(this DataRow row, DataRowValidatorModel rowModel, IList<string> inputExceptions = null)
+        {
             bool isValid = true;
             if (rowModel != null)
             {
                 if (rowModel.expectedType.Equals(typeof(DateTime)))
-                    isValid = IsDateValueValid(row, rowModel);
+                    isValid = IsDateValueValid(row, rowModel, inputExceptions);
                 else if (rowModel.expectedType.Equals(typeof(Int32)))
-                    isValid = IsNumericValueValid(row, rowModel);
+                    isValid = IsNumericValueValid(row, rowModel, inputExceptions);
                 else if (rowModel.expectedType.Equals(typeof(Decimal)))
-                    isValid = IsDecimalValueValid(row, rowModel);
+                    isValid = IsDecimalValueValid(row, rowModel, inputExceptions);
                 //extend for other types and value that uses patterns
             }
             return isValid;
         }
 
-        private static bool IsDateValueValid(DataRow row, DataColumnValidatorModel columnModel)
+        private static bool IsDateValueValid(DataRow row, DataColumnValidatorModel columnModel, IList<string> inputExceptions = null)
         {
             string format = (!string.IsNullOrEmpty(columnModel.pattern)) ? columnModel.pattern : "yyyy-MM-dd HH:mm:ss";
-            string rowValue = row[columnModel.columnName].ToString();
+            string rowValue = row[columnModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException = inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             DateTime outDate;
             return DateTime.TryParseExact(rowValue, format, CultureInfo.CurrentCulture, DateTimeStyles.None, out outDate);
         }
 
-        private static bool IsDateValueValid(DataRow row, DataRowValidatorModel rowModel)
+        private static bool IsDateValueValid(DataRow row, DataRowValidatorModel rowModel, IList<string> inputExceptions = null)
         {
             string format = (!string.IsNullOrEmpty(rowModel.pattern)) ? rowModel.pattern : "yyyy-MM-dd HH:mm:ss";
-            string rowValue = row[rowModel.columnName].ToString();
+            string rowValue = row[rowModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException = inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             DateTime outDate;
             return DateTime.TryParseExact(rowValue, format, CultureInfo.CurrentCulture, DateTimeStyles.None, out outDate);
         }
 
-        private static bool IsNumericValueValid(DataRow row, DataColumnValidatorModel columnModel)
+        private static bool IsNumericValueValid(DataRow row, DataColumnValidatorModel columnModel, IList<string> inputExceptions = null)
         {
-            string rowValue = row[columnModel.columnName].ToString();
+            string rowValue = row[columnModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException = inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             int result = 0;
             return Int32.TryParse(rowValue, out result);
         }
 
-        private static bool IsNumericValueValid(DataRow row, DataRowValidatorModel rowModel)
+        private static bool IsNumericValueValid(DataRow row, DataRowValidatorModel rowModel, IList<string> inputExceptions = null)
         {
-            string rowValue = row[rowModel.columnName].ToString();
+            string rowValue = row[rowModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException =  inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             int result = 0;
             return Int32.TryParse(rowValue, out result);
         }
 
-        private static bool IsDecimalValueValid(DataRow row, DataColumnValidatorModel columnModel)
+        private static bool IsDecimalValueValid(DataRow row, DataColumnValidatorModel columnModel, IList<string> inputExceptions = null)
         {
-            string rowValue = row[columnModel.columnName].ToString();
+            string rowValue = row[columnModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException = inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             decimal result = 0;
             return Decimal.TryParse(rowValue, out result);
         }
 
-        private static bool IsDecimalValueValid(DataRow row, DataRowValidatorModel rowModel)
+        private static bool IsDecimalValueValid(DataRow row, DataRowValidatorModel rowModel, IList<string> inputExceptions = null)
         {
-            string rowValue = row[rowModel.columnName].ToString();
+            string rowValue = row[rowModel.columnName].ToString().TrimAllExtraSpace();
+            bool isException = false;
 
             if (string.IsNullOrEmpty(rowValue))
                 return true;
+
+            if (inputExceptions != null)
+                isException = inputExceptions.Any(x => x.TrimAllExtraSpace().Equals(rowValue));
+
+            if (isException) return true;
 
             decimal result = 0;
             return Decimal.TryParse(rowValue, out result);

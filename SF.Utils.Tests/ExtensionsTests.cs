@@ -25,19 +25,47 @@ namespace SF.Utils.Tests
         /// Check date if weekday
         /// </summary>
         [Fact]
-        public void CHECK_DATE_IS_WEEKDAY() {
+        public void CHECK_DATE_IS_WEEKDAY()
+        {
             DateTime date = new DateTime(2020, 6, 3);// can be any date on weekday
             Assert.True(!date.IsWeekEnd());
         }
     }
 
-    public class StringExtensionsTests {
+    public class StringExtensionsTests
+    {
 
         [Fact]
-        public void TRIM_ALL_SPACE() {
+        public void TRIM_ALL_SPACE()
+        {
             string input = " remaining essentially   unchanged.  ";
             input = input.TrimAllExtraSpace();
-            Assert.Equal("remaining essentially unchanged.",input);
+            Assert.Equal("remaining essentially unchanged.", input);
+        }
+    }
+
+    public class DecimalExtensions
+    {
+
+        [Fact]
+        public void CONVERT_TO_CURRENCY()
+        {
+            decimal input = 12345.67m;
+            Assert.Equal("$12,345.67", input.FormatToCurrency());
+        }
+
+        [Fact]
+        public void CONVERT_TO_CURRENCY_WITH_SUPPORTED_CULTURE()
+        {
+            decimal input = 12345.67m;
+            Assert.Equal("¥12,345.67", input.FormatToCurrency(new System.Globalization.CultureInfo("zh-CN")));
+        }
+
+        [Fact]
+        public void CONVERT_TO_NUMBER_FORMAT()
+        {
+            decimal input = 12345.00m;
+            Assert.Equal("12,345", input.ConvertToNumericFormat());
         }
     }
 }

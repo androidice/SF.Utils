@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.IO;
 
 namespace SF.Utils.WorkBookConverter
 {
@@ -15,7 +16,8 @@ namespace SF.Utils.WorkBookConverter
         {
             IWorkbook wb = wbService.ReadWorkBook(path); // read the workbook
             int noOfSheets = wb.NumberOfSheets; // get the number of sheets;
-            DataTable result = new DataTable();
+            string fileName = Path.GetFileNameWithoutExtension(path);
+            DataTable result = new DataTable(fileName);// initialize the datatable with file name for tracing
 
             InitializeHeaders(result, beginRow, beginCol, wb);// initialize DataTable headers from excell header
 

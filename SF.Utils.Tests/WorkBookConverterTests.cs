@@ -26,12 +26,27 @@ namespace SF.Utils.Tests
         }
 
 
+        [Fact]
+        public void CONVERT_TO_DATA_TABLE_SHOULD_SUPPORT_TABLE_NAME()
+        {
+            IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
+
+            /**
+             * Convert the whole .xlsx file to data table
+             */
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50.xlsx";
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation);
+            Assert.Equal("file_example_XLSX_50", result.TableName);
+        }
+
+
         /// <summary>
         /// Test the WorkBookConverter if can successfully convert .xls file to the datatable
         /// with zero configuration
         /// </summary>
         [Fact]
-        public void CONVERT_XLS_TO_DATA_TABLE() {
+        public void CONVERT_XLS_TO_DATA_TABLE()
+        {
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
             /**
              * Convert the whole .xls file to data table
@@ -51,7 +66,7 @@ namespace SF.Utils.Tests
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
 
             string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50_1.xlsx";
-            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation, 6,2);
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation, 6, 2);
             Assert.IsType<DataTable>(result);
             Assert.Equal(51, result.Rows.Count);
         }

@@ -38,7 +38,8 @@ namespace SF.AttendanceManagement.Tests
         public void VALIDATE_SETTLEMENTFILE()
         {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
-            bool isValid = attendanceManagement.IsSettlementFileValid(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\settlement file.xlsx");  
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月.xlsx";
+            bool isValid = attendanceManagement.IsSettlementFileValid(fileLocation);  
             Assert.True(isValid);
         }
 
@@ -66,7 +67,7 @@ namespace SF.AttendanceManagement.Tests
                     ReportDateString = "2019-04-01",
                     DepartmentFilePaths= new List<string>()
                     {
-                        @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\template 1-done.xlsx"
+                        @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年控制阀4月考勤.xlsx"
                     }
                 }
             );
@@ -83,7 +84,7 @@ namespace SF.AttendanceManagement.Tests
                     ReportDateString = "2019-04-01",
                     DepartmentFilePaths = new List<string>()
                     {
-                        @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\template 1-done-err.xlsx"
+                        @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation error files\2020年控制阀4月考勤.xlsx"
                     }
                 }
             );
@@ -112,7 +113,7 @@ namespace SF.AttendanceManagement.Tests
                 new AttendanceFinancialReportInputModel()
                 {
                     ReportDateString = "2019-04-01",
-                    GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\guard room file-err.xls"
+                    GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation error files\4月门卫打卡数据.xls"
                 }
             );
             Assert.True(!string.IsNullOrEmpty(errorMsg));
@@ -125,8 +126,8 @@ namespace SF.AttendanceManagement.Tests
             string errorMsg = attendanceManagement.ValidateFinancialReportGenerationInput(
                 new AttendanceFinancialReportInputModel()
                 {
-                    ReportDateString = "2019-04-01",
-                    SettlementFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\settlement file.xlsx"
+                    ReportDateString = "2020-04-01",
+                    SettlementFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月.xlsx"
                 }
             );
             Assert.True(string.IsNullOrEmpty(errorMsg));
@@ -146,17 +147,17 @@ namespace SF.AttendanceManagement.Tests
             Assert.True(!string.IsNullOrEmpty(errorMsg));
         }
 
-        
+        [Fact]
         public void GENERATE_FINANCIAL_REPORT_WITHOUT_SETTLEMENT_FILE() {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             attendanceManagement.GenerateFinancialReport(new AttendanceFinancialReportInputModel()
             {
-                ReportDateString = "2019-04-01",
+                ReportDateString = "2020-04-01",
                 DepartmentFilePaths = new List<string>() {
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\department1.xlsx",
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\department2.xlsx"
+                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年控制阀4月考勤.xlsx",
+                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年考勤及就餐表.xlsx"
                 },
-                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\guard room.xls"
+                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月门卫打卡数据.xls"
             });
         }
     }
