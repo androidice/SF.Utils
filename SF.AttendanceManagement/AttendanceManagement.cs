@@ -1,42 +1,432 @@
-﻿using SF.AttendanceManagement.Models.RequestModel;
-using System;
+﻿using System;
+using System.Globalization;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
+using System.Text.RegularExpressions;
+using SF.Utils.Extensions;
+using SF.Utils.Validators;
+using SF.Utils.WorkBookConverter;
+using SF.AttendanceManagement.Models.RequestModel;
+using SF.AttendanceManagement.Models.ResponseModel;
+using SF.AttendanceManagement.Models.FinancialReportModel;
+
 
 namespace SF.AttendanceManagement
 {
-    public class AttendanceManagement: IAttendanceManagement
+    public class AttendanceManagement : IAttendanceManagement
     {
+        private readonly IWorkBookConverter workbookConverter = new WorkBookConverter();
+
+        private readonly int STANDARD_WORKING_HOURS = 8;
+        private readonly int LOGIN_MIN_BUFFER = 2; //set minimum login buffer for 2hours, use this to deduct 2hour from login time this is for the early login records
+        private readonly int LOGOUT_MAX_BUFFER = 1; //set max logout buffer for 1hours, use this to add 1hour from lougout time, this is to cater the full 1hour extra time 
+
+        private readonly string[] medical_leave_identifiers = new string[] { "病假" }; // medical leave
+        private readonly string[] no_pay_leave_identifiers = new string[] { "事假" }; // no pay leave
+        private readonly string[] annual_leave_identifiers = new string[] { "公休" }; //annual leave
+
+        private readonly string[] off_in_liue_identifiers = new string[] { "调休", "休" }; // off in liue
+        private readonly string[] normal_shift_identifier = new string[] { "√" };// normal shift
+
+        private readonly string[] mid_shift_identifiers = new string[] { "中" }; // midshift 16:00-00:00 or 16:30-00:30
+        private readonly string[] night_shift_identifiers = new string[] { "夜" }; // night shift 00:00-08:00
+        private readonly string[] mixed_schedule_identifiers = new string[] { "中夜" }; //full mid-day shift + 1/2 night shift or 1/2 mid-day shift + full night shift   20:00-08:00 or 16:00-04:00
+
+        public DateTime? AttendanceReportStartDate
+        {
+            get
+            {
+                return AttendanceReportStartDate;
+            }
+            set
+            {
+                this.AttendanceReportStartDate = value;
+            }
+        }
+
+        public DateTime? AttendanceReportEndDate
+        {
+            get
+            {
+                return AttendanceReportEndDate;
+            }
+            set
+            {
+                this.AttendanceReportEndDate = value;
+            }
+        }
+
         /// <summary>
         /// Generate financial report and return the path location 
         /// for the generated file location
         /// </summary>
         /// <returns></returns>
-        public string GenerateFinancialReport(AttendanceFinancialReportInputModel inputModel, string destinationDirectory)
+        public AttendanceFinancialReportOutputModel GenerateFinancialReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "")
         {
-            throw new NotImplementedException();
+            bool isValid = true;
+            string errorMsg = string.Empty;
+            string outputPath = string.Empty;
+
+            errorMsg = ValidateFinancialReportGenerationInput(inputModel);
+            isValid = errorMsg.Equals(string.Empty);
+
+            if (isValid)// process financial generation
+            {
+
+                string reportDateString = inputModel.ReportDateString;
+                DateTime startDate = DateTime.ParseExact(reportDateString, "yyyy-MM-dd", CultureInfo.CurrentCulture);
+                DateTime endDate = startDate.AddMonths(1).AddDays(-1);
+
+                this.AttendanceReportStartDate = startDate;
+                this.AttendanceReportEndDate = endDate;
+
+                IEnumerable<DataTable> departmentRecords = this.ConvertDepartmentRecordsToDataTable(inputModel.DepartmentFilePaths);
+                DataTable guardRoomRecords = this.ConvertGuardRoomRecordsToDataTable(inputModel.GuardRoomFilePath);
+                DataTable settlementRecords = this.ConvertSettlementRecordsToDataTable(inputModel.SettlementFilePath);
+
+                IEnumerable<DataTable> results = this.GenerateFinancialReport(startDate, endDate, departmentRecords, guardRoomRecords, settlementRecords);
+
+            }
+            return new AttendanceFinancialReportOutputModel()
+            {
+                Success = isValid,
+                ErrorMsg = errorMsg,
+                DestinationPaths = new List<string>()
+            };
         }
 
-        private void AnalizeDepertmentReport()
+        private IEnumerable<DataTable> GenerateFinancialReport(DateTime startDate,
+                                             DateTime endDate,
+                                             IEnumerable<DataTable> departmentRecords,
+                                             DataTable guardRoomRecords,
+                                             DataTable settlementRecords)
         {
-            throw new NotImplementedException();
+            string[] separators = new string[] { "日期", "姓名", "" };
+            ICollection<DataTable> outResults = new List<DataTable>();
+
+            foreach (var departmentRecord in departmentRecords)
+            { // loop through each department records
+
+                DataTable outResult = new DataTable();
+                outResult.Columns.AddRange(new DataColumn[] {
+                    new DataColumn("empName"),
+                    new DataColumn("wkDayOt"),
+                    new DataColumn("wkEndOt"),
+                    new DataColumn("midShiftOt"),
+                    new DataColumn("nightShiftOt"),
+                    new DataColumn("noOfMedicalLeave"),
+                    new DataColumn("noOfOffInLiue"),
+                    new DataColumn("noOfNoPayLeave")
+                });
+
+                foreach (DataRow record in departmentRecord.Rows)
+                {
+                    int column_index = 1;
+                    string rowValue = record[0].ToString();
+
+                    for (DateTime sDate = startDate; DateTime.Compare(sDate, endDate) < 0; sDate = sDate.AddDays(1))
+                    {// loop through date columns
+                        bool shoudEscape = separators.Any(x => x.Trim().Equals(rowValue.Trim()));
+                        if (!shoudEscape)
+                        {//means that the record is an employee record
+                            this.AnalyzeEmployeeRecord(record, guardRoomRecords, column_index);
+                            column_index++;
+                        }
+                        else
+                        {
+                            break;//go to the next record
+                        }
+                    }
+                }
+            }
+            return outResults;
         }
 
-        private bool IsGuardRoomFileValid(string path)
+        private void AnalyzeEmployeeRecord(DataRow employeeRecords, DataTable guardRoomRecords, int column_index)
         {
-            throw new NotImplementedException();
+            const int NAME_INDEX = 0;
+            const int DATE_TIME_STAMP_INDEX = 5;
+            string empName = employeeRecords[NAME_INDEX].ToString();
+
+            var _guardRoomRecords = guardRoomRecords.AsEnumerable()
+                                        .Where(c => c[NAME_INDEX].ToString().Trim().Equals(empName.Trim()));
+
+            bool hasRecords = _guardRoomRecords != null && _guardRoomRecords.Count() > 0;
+            if (hasRecords)
+            {
+                string emp_report = employeeRecords[column_index].ToString();//employee report on department template
+                AttendanceReportModel reportModel = GetAttendanceReport(new AttendanceReportModel()
+                {
+                    Symbol = emp_report
+                });
+            }
+            else
+            {
+
+            }
         }
 
-        private bool IsSettlementFileValid(string path)
+        public void ProccessSchedules()
         {
-            throw new NotImplementedException();
+
+        }
+        public void ProcessMorningSchedule(decimal overtimeHours, DataRow empRow)
+        {
+            //shedule: "08:00:00-16:00:00";
+            DateTime loginDateTime = DateTime.Today.AddHours(8 - LOGIN_MIN_BUFFER);//set login time from 7am
+            DateTime logoutDateTime = loginDateTime.AddHours(STANDARD_WORKING_HOURS + LOGOUT_MAX_BUFFER);
         }
 
-        private bool IsDepartmentFileValid(string path)
+        public AttendanceReportModel GetAttendanceReport(AttendanceReportModel model)
         {
-            throw new NotImplementedException();
+            string record = model.Symbol;
+
+            string pattern = @"([-+]?\d+(\.\d+)?)|([-+]?\.\d+)";
+            string nonSymbol = Regex.Match(record, pattern).Value;
+            string symbol = record.Replace(nonSymbol, string.Empty);
+            decimal result = 0;
+            decimal.TryParse(nonSymbol, out result);
+
+            return new AttendanceReportModel()
+            {
+                Symbol = symbol,
+                Value = result
+            };
         }
 
+        public IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files)
+        {
+            bool hasRecords = files != null && files.Count > 0;
+            if (hasRecords)
+            {
+                ICollection<DataTable> departmentRecords = new List<DataTable>();
+                foreach (string file in files)
+                {
+                    string fileName = file.Substring(file.LastIndexOf(@"\") + 1);
+                    fileName = fileName.Substring(0, fileName.LastIndexOf('.'));
+
+                    DataTable records = ConvertDepartmentRecordsToDataTable(file);
+                    records.TableName = fileName;// set the department file name
+                    departmentRecords.Add(records);
+                }
+                return departmentRecords;
+            }
+            return null;
+        }
+
+        public DataTable ConvertGuardRoomRecordsToDataTable(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                DataTable guardRoomRecords = workbookConverter.ConvertWorkBookToDataTable(path, 6, 1);
+                return guardRoomRecords;
+            }
+            return null;
+        }
+
+        public DataTable ConvertDepartmentRecordsToDataTable(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                DataTable departmentRecords = workbookConverter.ConvertWorkBookToDataTable(path);
+                return departmentRecords;
+            }
+            return null;
+        }
+
+        public DataTable ConvertSettlementRecordsToDataTable(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                DataTable settlementRecords = workbookConverter.ConvertWorkBookToDataTable(path, 2, 0);
+                return settlementRecords;
+            }
+            return null;
+        }
+
+
+        public string ValidateFinancialReportGenerationInput(AttendanceFinancialReportInputModel inputModel)
+        {
+            bool isValid = true;
+            string errorMsg = string.Empty;
+            string reportDateString = inputModel.ReportDateString;
+            DateTime startDate = DateTime.ParseExact(reportDateString, "yyyy-MM-dd", CultureInfo.CurrentCulture);
+            DateTime endDate = startDate.AddMonths(1).AddDays(-1);
+
+            //validate department files
+            bool hasRecords = inputModel.DepartmentFilePaths != null && inputModel.DepartmentFilePaths.Count > 0;
+            if (hasRecords)
+            {
+                foreach (string departmentFile in inputModel.DepartmentFilePaths)
+                {
+                    string fileName = departmentFile.Substring(departmentFile.LastIndexOf(@"\") + 1);
+                    isValid = this.IsDepartmentFileValid(departmentFile, startDate, endDate);
+
+                    if (!isValid)
+                    {
+                        errorMsg = string.Format("Department file: {0} is incorrect format.", fileName);
+                        break;
+                    }
+                }
+            }
+
+            //validate department files
+
+            //validate guardroom file
+            if (!string.IsNullOrEmpty(inputModel.GuardRoomFilePath))
+            {
+                string guardRoomFile = inputModel.GuardRoomFilePath;
+                string fileName = guardRoomFile.Substring(guardRoomFile.LastIndexOf(@"\") + 1);
+                isValid = this.IsGuardRoomFileValid(guardRoomFile);
+
+                if (!isValid) errorMsg = string.Format("Guardroom file: {0} is incorrect format", fileName);
+            }
+            //validate guardroom file
+
+            //validate settlement file
+            if (!string.IsNullOrEmpty(inputModel.SettlementFilePath))
+            {
+                string settlementFile = inputModel.SettlementFilePath;
+                string fileName = settlementFile.Substring(settlementFile.LastIndexOf(@"\") + 1);
+
+                isValid = this.IsSettlementFileValid(inputModel.SettlementFilePath);
+
+                if (!isValid) errorMsg = string.Format("Settlement file: {0} is incorrect format", fileName);
+            }
+            //validate settlement file
+            return errorMsg;
+        }
+
+
+        public bool IsGuardRoomFileValid(string path)
+        {
+            const int DATE_TIME_STAMP_INSTANCE = 9;
+            var result = ConvertGuardRoomRecordsToDataTable(path);
+            bool isValid = result.ValidateColumn(new List<DataColumnValidatorModel>() {
+                new DataColumnValidatorModel(){
+                    columnName = DATE_TIME_STAMP_INSTANCE.ToString(),
+                    expectedType = typeof(DateTime),
+                    pattern = "yyyy-MM-dd HH:mm:ss"
+                }
+            });
+            return isValid;
+        }
+
+        public bool IsSettlementFileValid(string path)
+        {
+            IWorkBookConverter workBookConverter = new WorkBookConverter();
+            var result = workBookConverter.ConvertWorkBookToDataTable(path, 2, 0);
+
+            const int WEEKDAY_OT = 3;
+            const int WEEKEND_OT = 4;
+            const int PREV_WEEKDAY_OT = 5;
+            const int PREV_WEEKEND_OT = 6;
+            const int TOTAL_OT = 7;
+            const int SETTLEMENT = 8;
+            const int WEEKDAY_CARRYOVER_OT = 9;
+            const int WEEKEND_CARRYOVER_OT = 10;
+
+            bool isValid = result.ValidateColumn(new List<DataColumnValidatorModel>() {
+                new DataColumnValidatorModel(){
+                    columnName = WEEKDAY_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = WEEKEND_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = PREV_WEEKDAY_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = PREV_WEEKEND_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = TOTAL_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = SETTLEMENT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = WEEKDAY_CARRYOVER_OT.ToString(),
+                    expectedType = typeof(decimal)
+                },
+                new DataColumnValidatorModel(){
+                    columnName = WEEKEND_CARRYOVER_OT.ToString(),
+                    expectedType = typeof(decimal)
+                }
+            });
+
+            return isValid;
+        }
+
+        public bool IsDepartmentFileValid(string path, DateTime startDate, DateTime endDate)
+        {
+
+            DataTable result = ConvertDepartmentRecordsToDataTable(path);
+
+            /*validate headers*/
+            string[] separators = new string[] { "日期" };
+            string[] headerSeparators = new string[] { "姓名" };
+            var headerRecords = result.AsEnumerable()
+                                .Where(row => headerSeparators.Any(x => x.TrimAllExtraSpace().Equals(row[0].ToString().TrimAllExtraSpace())));
+
+
+            bool isValid = true;
+            isValid = (headerRecords != null && headerRecords.Count() > 0);
+            if (isValid)
+            {
+
+                foreach (var records in headerRecords)
+                {
+                    int dayResult = 0;
+                    int date_index = 1;
+                    string rowValue = records[date_index].ToString();
+                    isValid = Int32.TryParse(rowValue, out dayResult);
+                    if (isValid)
+                    {
+                        DateTime sdate = startDate;
+                        while (DateTime.Compare(sdate, endDate) <= 0)
+                        {
+                            rowValue = records[date_index].ToString();
+                            string current_year = sdate.Year.ToString();
+                            string current_month = sdate.Month.ToString("00");
+                            string current_day = Int32.Parse(rowValue).ToString("00");
+                            string dateformat = "yyyy-MM-dd";
+                            string dateString = string.Format("{0}-{1}-{2}", current_year, current_month, current_day); //"yyyy-MM-dd"
+                            records[date_index] = dateString;
+                            rowValue = records[date_index].ToString();
+
+                            isValid = records.ValidateRow(new DataRowValidatorModel()
+                            {
+                                columnName = date_index.ToString(),
+                                expectedType = typeof(DateTime),
+                                pattern = dateformat
+                            });
+
+                            isValid = (isValid &&
+                                        DateTime.Compare(
+                                                DateTime.ParseExact(rowValue, dateformat, CultureInfo.CurrentCulture),
+                                                sdate) == 0);// to validate if follows a sequence
+
+                            if (!isValid) break;
+
+                            sdate = sdate.AddDays(1);
+                            date_index++;
+                        }
+                    }
+
+                    if (!isValid) break;
+                }
+            }
+            /*validate headers*/
+            return isValid;
+        }
     }
 }

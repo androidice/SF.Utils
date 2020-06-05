@@ -5,8 +5,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\ResponseModel\" />
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SF.AttendanceManagement.DataAccess\SF.AttendanceManagement.DataAccess.csproj" />
+    <ProjectReference Include="..\SF.Utils\SF.Utils.csproj" />
   </ItemGroup>
 
 </Project>

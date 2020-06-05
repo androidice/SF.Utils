@@ -1,0 +1,9 @@
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.deps.json
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.csproj.CoreCompileInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.AssemblyInfoInputs.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.AssemblyInfo.cs
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement.DataAccess\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.csprojAssemblyReference.cache

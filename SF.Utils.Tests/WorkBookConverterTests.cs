@@ -8,36 +8,66 @@ namespace SF.Utils.Tests
     public class WorkBookConverterTests
     {
         /// <summary>
-        /// Test the WorkBookConverter if can successfully convert .xlsx and .xls file
+        /// Test the WorkBookConverter if can successfully convert .xlsx file to the data table
+        /// with zero configuration
         /// </summary>
         [Fact]
-        public void CONVERT_XLS_AND_XLSX_TO_DATA_TABLE()
+        public void CONVERT_XLSX_TO_DATA_TABLE()
         {
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
 
             /**
              * Convert the whole .xlsx file to data table
              */
-            var result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50.xlsx");
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50.xlsx";
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation);
             Assert.IsType<DataTable>(result);
+
+        }
+
+
+        /// <summary>
+        /// Test the WorkBookConverter if can successfully convert .xls file to the datatable
+        /// with zero configuration
+        /// </summary>
+        [Fact]
+        public void CONVERT_XLS_TO_DATA_TABLE() {
+            IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
             /**
              * Convert the whole .xls file to data table
              */
-            result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50.xls");
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50.xls";
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation);
             Assert.IsType<DataTable>(result);
             Assert.Equal(51, result.Rows.Count);//current test file contains 51 rows
         }
-
         /// <summary>
-        /// Test the WorkBookConverter if can successfully convert .xlsx and .xls file
-        /// with row and col to start red the workbook
+        /// Test the WorkBookConverter if can successfully convert .xlsx file to datatable
+        /// with row and col configuarion to start read the workbook
         /// </summary>
         [Fact]
-        public void CONVERT_XLS_AND_XLSX_TO_DATA_TABLE_WITH_START_ROW_AND_COL_CONFIGURABLE()
+        public void CONVERT_XLSX_TO_DATA_TABLE_WITH_START_ROW_AND_COL_CONFIGURATION()
         {
             IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
 
-            var result = workBookConverter.ConvertWorkBookToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50_1.xlsx", 6,2);
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLSX_50_1.xlsx";
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation, 6,2);
+            Assert.IsType<DataTable>(result);
+            Assert.Equal(51, result.Rows.Count);
+        }
+
+
+        /// <summary>
+        /// Test the WorkBookConverter if can successfully convert .xls file to datatable
+        /// with row and col configuarion to start read the workbook
+        /// </summary>
+        [Fact]
+        public void CONVERT_XLS_TO_DATATA_TABLE_WITH_START_ROW_AND_CON_CONFIGURATION()
+        {
+            IWorkBookConverter workBookConverter = new WorkBookConverter.WorkBookConverter();
+
+            string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\workbook files\file_example_XLS_50_1.xls";
+            var result = workBookConverter.ConvertWorkBookToDataTable(fileLocation, 3, 1);
             Assert.IsType<DataTable>(result);
             Assert.Equal(51, result.Rows.Count);
         }

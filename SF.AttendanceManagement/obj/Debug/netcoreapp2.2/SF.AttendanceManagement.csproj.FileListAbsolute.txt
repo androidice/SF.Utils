@@ -7,3 +7,8 @@ C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Deb
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.dll
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.pdb
 C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.csprojAssemblyReference.cache
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.Utils.dll
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.AttendanceManagement.DataAccess.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\bin\Debug\netcoreapp2.2\SF.Utils.pdb
+C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.AttendanceManagement\obj\Debug\netcoreapp2.2\SF.AttendanceManagement.csproj.CopyComplete

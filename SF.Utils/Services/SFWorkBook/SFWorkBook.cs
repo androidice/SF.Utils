@@ -19,8 +19,11 @@ namespace SF.Utils.SFWorkBook
         #region private
         private bool IsValidFileExt(string fileName)
         {
-            string ext = fileName.Substring(fileName.LastIndexOf('.')).ToLower();
-            return Array.IndexOf(accepted_formats, ext) >= 0;
+            if (!string.IsNullOrEmpty(fileName)) {
+                string ext = fileName.Substring(fileName.LastIndexOf('.')).ToLower();
+                return Array.IndexOf(accepted_formats, ext) >= 0;
+            }
+            return false;
         }
 
         private string GetNumericCellValue(ICell cell)
