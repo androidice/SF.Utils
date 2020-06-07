@@ -1,5 +1,4 @@
-﻿using SF.AttendanceManagement.Models.FinancialReportModel;
-using SF.AttendanceManagement.Models.RequestModel;
+﻿using SF.AttendanceManagement.Models.RequestModel;
 using SF.AttendanceManagement.Models.ResponseModel;
 using System;
 using System.Collections.Generic;
@@ -20,7 +19,5 @@ namespace SF.AttendanceManagement
         bool IsGuardRoomFileValid(string path);
         bool IsSettlementFileValid(string path);
         bool IsDepartmentFileValid(string path, DateTime startDate, DateTime endDate);
-
-        AttendanceReportModel GetAttendanceReport(AttendanceReportModel model);
     }
 }

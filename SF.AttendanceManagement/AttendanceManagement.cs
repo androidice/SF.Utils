@@ -11,7 +11,6 @@ using SF.Utils.Validators;
 using SF.Utils.WorkBookConverter;
 using SF.AttendanceManagement.Models.RequestModel;
 using SF.AttendanceManagement.Models.ResponseModel;
-using SF.AttendanceManagement.Models.FinancialReportModel;
 
 
 namespace SF.AttendanceManagement
@@ -132,7 +131,7 @@ namespace SF.AttendanceManagement
                         bool shoudEscape = separators.Any(x => x.Trim().Equals(rowValue.Trim()));
                         if (!shoudEscape)
                         {//means that the record is an employee record
-                            this.AnalyzeEmployeeRecord(record, guardRoomRecords, column_index);
+                            //this.AnalyzeEmployeeRecord(record, guardRoomRecords, column_index);
                             column_index++;
                         }
                         else
@@ -145,29 +144,7 @@ namespace SF.AttendanceManagement
             return outResults;
         }
 
-        private void AnalyzeEmployeeRecord(DataRow employeeRecords, DataTable guardRoomRecords, int column_index)
-        {
-            const int NAME_INDEX = 0;
-            const int DATE_TIME_STAMP_INDEX = 5;
-            string empName = employeeRecords[NAME_INDEX].ToString();
-
-            var _guardRoomRecords = guardRoomRecords.AsEnumerable()
-                                        .Where(c => c[NAME_INDEX].ToString().Trim().Equals(empName.Trim()));
-
-            bool hasRecords = _guardRoomRecords != null && _guardRoomRecords.Count() > 0;
-            if (hasRecords)
-            {
-                string emp_report = employeeRecords[column_index].ToString();//employee report on department template
-                AttendanceReportModel reportModel = GetAttendanceReport(new AttendanceReportModel()
-                {
-                    Symbol = emp_report
-                });
-            }
-            else
-            {
-
-            }
-        }
+        
 
         public void ProccessSchedules()
         {
@@ -181,22 +158,6 @@ namespace SF.AttendanceManagement
             DateTime logoutDateTime = loginDateTime.AddHours(STANDARD_WORKING_HOURS + LOGOUT_MAX_BUFFER);
         }
 
-        public AttendanceReportModel GetAttendanceReport(AttendanceReportModel model)
-        {
-            string record = model.Symbol;
-
-            string pattern = @"([-+]?\d+(\.\d+)?)|([-+]?\.\d+)";
-            string nonSymbol = Regex.Match(record, pattern).Value;
-            string symbol = record.Replace(nonSymbol, string.Empty);
-            decimal result = 0;
-            decimal.TryParse(nonSymbol, out result);
-
-            return new AttendanceReportModel()
-            {
-                Symbol = symbol,
-                Value = result
-            };
-        }
 
         public IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files)
         {

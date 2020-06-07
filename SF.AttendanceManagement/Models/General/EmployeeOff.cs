@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SF.AttendanceManagement.Models.FinancialReportModel
+namespace SF.AttendanceManagement.Models.General
 {
     public static class EmployeeOff
     {

@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using SF.Utils.Extensions;
-using SF.AttendanceManagement.Models.FinancialReportModel;
+using SF.AttendanceManagement.Models.General;
 
 namespace SF.AttendanceManagement.Services
 {
-    public class FinancialReportManagementService : IFinancialReportManagementService
+    public class DepartmentReportGeneratorService : IDepartmentReportGeneratorService
     {
         private readonly int STANDARD_WORKING_HOURS = 8;
         private readonly int LOGIN_MIN_BUFFER = 2; //set minimum login buffer for 2hours, use this to deduct 2hour from login time this is for the early login records
@@ -122,5 +122,42 @@ namespace SF.AttendanceManagement.Services
             throw new NotImplementedException();
         }
 
+        public decimal[] Apply36HoursRule(decimal weekdayOt, decimal weekendOt)
+        {
+            decimal[] scores = new decimal[4] { 0, 0, 0, 0 };
+            var BASE_SCORE = 36;
+            decimal totalScore = weekdayOt + weekendOt; // x - weekday ot, y - weekend ot
+            if (totalScore >= 36)
+            {
+                if (weekdayOt > BASE_SCORE)
+                {
+                    scores[0] = BASE_SCORE; //A
+                    scores[1] = 0; //B
+                    scores[2] = weekdayOt - BASE_SCORE;//C
+                    scores[3] = weekendOt;//D
+                }
+                else if (weekdayOt < BASE_SCORE)
+                {
+                    scores[0] = weekdayOt;//A
+                    scores[1] = BASE_SCORE - weekdayOt;//B
+                    scores[2] = 0;//C
+                    scores[3] = weekendOt - scores[1];//D
+                }
+                else
+                {
+                    scores[0] = weekdayOt;//A
+                    scores[1] = 0;//B
+                    scores[2] = 0;//C
+                    scores[3] = weekendOt - 0;//D
+                }
+            }
+            else
+            {
+                scores[0] = weekdayOt;
+                scores[1] = weekendOt;
+            }
+
+            return scores;
+        }
     }
 }
