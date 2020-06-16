@@ -5,66 +5,42 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using System.Text.RegularExpressions;
 using SF.Utils.Extensions;
 using SF.Utils.Validators;
 using SF.Utils.WorkBookConverter;
 using SF.AttendanceManagement.Models.RequestModel;
 using SF.AttendanceManagement.Models.ResponseModel;
-
+using SF.AttendanceManagement.Services;
+using SF.AttendanceManagement.Models.General;
+using Microsoft.Extensions.Logging;
 
 namespace SF.AttendanceManagement
 {
     public class AttendanceManagement : IAttendanceManagement
     {
         private readonly IWorkBookConverter workbookConverter = new WorkBookConverter();
+        private readonly IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
+        private readonly ILogger<AttendanceManagement> logger = new LoggerFactory().CreateLogger<AttendanceManagement>();
+
+        public AttendanceManagement() {
+           
+        }
+
+        public AttendanceManagement(ILogger<AttendanceManagement> logger)
+        {
+            this.logger = logger;
+        }
 
         private readonly int STANDARD_WORKING_HOURS = 8;
-        private readonly int LOGIN_MIN_BUFFER = 2; //set minimum login buffer for 2hours, use this to deduct 2hour from login time this is for the early login records
-        private readonly int LOGOUT_MAX_BUFFER = 1; //set max logout buffer for 1hours, use this to add 1hour from lougout time, this is to cater the full 1hour extra time 
-
-        private readonly string[] medical_leave_identifiers = new string[] { "病假" }; // medical leave
-        private readonly string[] no_pay_leave_identifiers = new string[] { "事假" }; // no pay leave
-        private readonly string[] annual_leave_identifiers = new string[] { "公休" }; //annual leave
-
-        private readonly string[] off_in_liue_identifiers = new string[] { "调休", "休" }; // off in liue
-        private readonly string[] normal_shift_identifier = new string[] { "√" };// normal shift
-
-        private readonly string[] mid_shift_identifiers = new string[] { "中" }; // midshift 16:00-00:00 or 16:30-00:30
-        private readonly string[] night_shift_identifiers = new string[] { "夜" }; // night shift 00:00-08:00
-        private readonly string[] mixed_schedule_identifiers = new string[] { "中夜" }; //full mid-day shift + 1/2 night shift or 1/2 mid-day shift + full night shift   20:00-08:00 or 16:00-04:00
-
-        public DateTime? AttendanceReportStartDate
+   
+        public IDepartmentReportGeneratorService GetDepartmentReportGeneratorService()
         {
-            get
-            {
-                return AttendanceReportStartDate;
-            }
-            set
-            {
-                this.AttendanceReportStartDate = value;
-            }
+            return departmentReportGeneratorService;
         }
 
-        public DateTime? AttendanceReportEndDate
+        public AttendanceFinancialReportOutputModel GenerateDepertmentReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "")
         {
-            get
-            {
-                return AttendanceReportEndDate;
-            }
-            set
-            {
-                this.AttendanceReportEndDate = value;
-            }
-        }
 
-        /// <summary>
-        /// Generate financial report and return the path location 
-        /// for the generated file location
-        /// </summary>
-        /// <returns></returns>
-        public AttendanceFinancialReportOutputModel GenerateFinancialReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "")
-        {
             bool isValid = true;
             string errorMsg = string.Empty;
             string outputPath = string.Empty;
@@ -79,14 +55,14 @@ namespace SF.AttendanceManagement
                 DateTime startDate = DateTime.ParseExact(reportDateString, "yyyy-MM-dd", CultureInfo.CurrentCulture);
                 DateTime endDate = startDate.AddMonths(1).AddDays(-1);
 
-                this.AttendanceReportStartDate = startDate;
-                this.AttendanceReportEndDate = endDate;
-
                 IEnumerable<DataTable> departmentRecords = this.ConvertDepartmentRecordsToDataTable(inputModel.DepartmentFilePaths);
                 DataTable guardRoomRecords = this.ConvertGuardRoomRecordsToDataTable(inputModel.GuardRoomFilePath);
                 DataTable settlementRecords = this.ConvertSettlementRecordsToDataTable(inputModel.SettlementFilePath);
 
-                IEnumerable<DataTable> results = this.GenerateFinancialReport(startDate, endDate, departmentRecords, guardRoomRecords, settlementRecords);
+                foreach (DataTable departmentRecord in departmentRecords)
+                {
+                    this.PrepareOvertimeReport(startDate, endDate, guardRoomRecords, departmentRecord);
+                }
 
             }
             return new AttendanceFinancialReportOutputModel()
@@ -97,67 +73,181 @@ namespace SF.AttendanceManagement
             };
         }
 
-        private IEnumerable<DataTable> GenerateFinancialReport(DateTime startDate,
-                                             DateTime endDate,
-                                             IEnumerable<DataTable> departmentRecords,
-                                             DataTable guardRoomRecords,
-                                             DataTable settlementRecords)
+        public DataTable PrepareOvertimeReport(DateTime startDate, DateTime endDate, DataTable guardRoomRecords, DataTable departmentRecords)
         {
-            string[] separators = new string[] { "日期", "姓名", "" };
-            ICollection<DataTable> outResults = new List<DataTable>();
+            DataTable overtimeReport = new DataTable(departmentRecords.TableName);
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("serialNo"),
+                new DataColumn("empName"),
+                new DataColumn("department"),
+                new DataColumn("weekDayOverTime"),
+                new DataColumn("weekEndOverTime"),
+                new DataColumn("nightShiftCount"),
+                new DataColumn("midShiftCount"),
+                new DataColumn("medicalLeave"),
+                new DataColumn("noPayLeave"),
+                new DataColumn("annualLeave"),
+                new DataColumn("offInLiue"),
+                new DataColumn("changeHour")
+            });
+            const int NAME_INDEX = 1;
 
-            foreach (var departmentRecord in departmentRecords)
-            { // loop through each department records
+            int serialNo = 1;
+            
 
-                DataTable outResult = new DataTable();
-                outResult.Columns.AddRange(new DataColumn[] {
-                    new DataColumn("empName"),
-                    new DataColumn("wkDayOt"),
-                    new DataColumn("wkEndOt"),
-                    new DataColumn("midShiftOt"),
-                    new DataColumn("nightShiftOt"),
-                    new DataColumn("noOfMedicalLeave"),
-                    new DataColumn("noOfOffInLiue"),
-                    new DataColumn("noOfNoPayLeave")
-                });
+            string errorMsg = string.Empty;
 
-                foreach (DataRow record in departmentRecord.Rows)
+            foreach (DataRow departmentRecord in departmentRecords.Rows)
+            {
+                int date_index = 2;
+
+                string employeeName = string.Empty;
+                string departmentName = string.Empty;
+                decimal weekEndOvertime = 0;
+                decimal weekDayOvertime = 0;
+                decimal nightShiftCount = 0;
+                decimal midShiftCount = 0;
+                decimal medicalLeave = 0;
+                decimal noPayLeave = 0;
+                decimal annualLeave = 0;
+                decimal offInLiue = 0;
+                decimal changeHour = 0;
+
+                DataRow tempRow = overtimeReport.NewRow();
+
+                int rowIndex = departmentRecords.Rows.IndexOf(departmentRecord);
+                bool isHeaderIndex = departmentReportGeneratorService.IsDepartmetTemplateHeader(rowIndex);
+
+                if (!isHeaderIndex)
                 {
-                    int column_index = 1;
-                    string rowValue = record[0].ToString();
-
-                    for (DateTime sDate = startDate; DateTime.Compare(sDate, endDate) < 0; sDate = sDate.AddDays(1))
-                    {// loop through date columns
-                        bool shoudEscape = separators.Any(x => x.Trim().Equals(rowValue.Trim()));
-                        if (!shoudEscape)
-                        {//means that the record is an employee record
-                            //this.AnalyzeEmployeeRecord(record, guardRoomRecords, column_index);
-                            column_index++;
-                        }
-                        else
+                    employeeName = departmentRecord[NAME_INDEX]?.ToString();
+                    if (!string.IsNullOrEmpty(employeeName))// there should be no empty name from department tempate report
+                    {
+                        for (DateTime current_date = startDate; DateTime.Compare(current_date, endDate) <= 0; current_date = current_date.AddDays(1))
                         {
-                            break;//go to the next record
+                            logger.LogInformation(string.Format("Generating report for {0} on {1}", employeeName, current_date));
+                            const int DATE_TIME_INDEX = 9;
+                            const int DEPARTMENT_INDEX = 0;
+                            string reported_attendance = departmentRecord[date_index]?.ToString();
+                            if (!string.IsNullOrEmpty(reported_attendance))// prevent empty record to be query from guard room
+                            {
+                                string reported_schedule = departmentReportGeneratorService.GetReportedAttendance(reported_attendance);
+                                decimal reported_worked_hours = departmentReportGeneratorService.GetReportedWorkedHours(reported_attendance, current_date);
+                                if (!string.IsNullOrEmpty(reported_schedule))
+                                {
+                                    EmployeeGuardRoomModel employee_login_records = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomRecords, employeeName, reported_schedule, reported_worked_hours, current_date);
+                                    if (string.IsNullOrEmpty(employee_login_records.Message))
+                                    {
+                                        ICollection<DataRow> _employee_records = employee_login_records.EmployeeRecords;
+
+                                        departmentName = _employee_records.FirstOrDefault()[DEPARTMENT_INDEX].ToString();
+                                        IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
+                                        decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
+
+                                        if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd()) // for weekday overtime
+                                            weekDayOvertime = worked_hours - STANDARD_WORKING_HOURS;
+                                        else if (worked_hours > STANDARD_WORKING_HOURS && current_date.IsWeekEnd()) //  for weekend overtime
+                                            weekEndOvertime = worked_hours - STANDARD_WORKING_HOURS;
+                                        else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
+                                            offInLiue = STANDARD_WORKING_HOURS - worked_hours;
+
+                                        if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
+                                        if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
+                                        //TODO for half midshift and half night shift  determine how much night time and how much half time
+                                    }
+                                    else
+                                    {
+                                        switch (employee_login_records.Message)
+                                        {
+                                            case "NoGuardRoomRecord":
+                                                //TODO: Record no guard room entry for the employee
+                                                break;
+                                            case "NoReport":
+                                                //TODO: Record the employee has no login or logout
+                                                break;
+                                            case "NoLogOut":
+                                                //TODO: Login has no matching logout
+                                                break;
+                                            case "InvalidTimeLog":
+                                                //TODO: Employee guard room records contains not pairing login and logout, for multiple entries
+                                                break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    // TODO: record the reported schedule as not supported symbol
+                                }
+
+                            }
+                            //new DataColumn("serialNo"),
+                            //new DataColumn("empName"),
+                            //new DataColumn("department"),
+                            //new DataColumn("weekDayOverTime"),
+                            //new DataColumn("weekEndOverTime"),
+                            //new DataColumn("nightShiftCount"),
+                            //new DataColumn("midShiftCount"),
+                            //new DataColumn("medicalLeave"),
+                            //new DataColumn("noPayLeave"),
+                            //new DataColumn("annualLeave"),
+                            //new DataColumn("offInLiue"),
+                            //new DataColumn("changeHour")
+                            tempRow["serialNo"] = serialNo;
+                            tempRow["empName"] = employeeName;
+                            tempRow["department"] = departmentName;
+                            tempRow["weekDayOverTime"] = weekDayOvertime;
+                            tempRow["weekEndOverTime"] = weekEndOvertime;
+                            tempRow["nightShiftCount"] = nightShiftCount;
+                            tempRow["midShiftCount"] = midShiftCount;
+                            tempRow["medicalLeave"] = medicalLeave;
+                            tempRow["noPayLeave"] = noPayLeave;
+                            tempRow["annualLeave"] = annualLeave;
+                            tempRow["offInLiue"] = offInLiue;
+                            tempRow["changeHour"] = changeHour;
+
+                            serialNo++;
                         }
+
+                        overtimeReport.Rows.Add(tempRow);
                     }
                 }
+                date_index++;
             }
-            return outResults;
+
+            return overtimeReport;
         }
 
-        
-
-        public void ProccessSchedules()
+        public void PrepareSettlementmentReport()
         {
-
+            //TODO: prepare settlement report for weekday ot and overtime 
+            throw new NotImplementedException();
         }
 
-        public void ProcessMorningSchedule(decimal overtimeHours, DataRow empRow)
+        public void PrepareOvertimeReportWithSettlement()
         {
-            //shedule: "08:00:00-16:00:00";
-            DateTime loginDateTime = DateTime.Today.AddHours(8 - LOGIN_MIN_BUFFER);//set login time from 7am
-            DateTime logoutDateTime = loginDateTime.AddHours(STANDARD_WORKING_HOURS + LOGOUT_MAX_BUFFER);
+            //TODO: prepare overtime report with the settlement
+            throw new NotImplementedException();
         }
 
+        public void PrerpareFinancialReport()
+        {
+            //TODO: process financial report
+            throw new NotImplementedException();
+        }
+
+        public void PrepareSettlementReport()
+        {
+            //TODO: prepare overtime report with the settlement
+            throw new NotImplementedException();
+        }
+
+        public void PrepareErrorLogReport()
+        {
+            //TODO: create a log report for errors like unsupported symbol
+            throw new NotImplementedException();
+        }
+
+       
 
         public IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files)
         {
@@ -174,6 +264,7 @@ namespace SF.AttendanceManagement
             }
             return null;
         }
+
 
         public DataTable ConvertGuardRoomRecordsToDataTable(string path)
         {
@@ -341,9 +432,12 @@ namespace SF.AttendanceManagement
                                 .Where(row => headerSeparators.Any(x => x.TrimAllExtraSpace().Equals(row[NAME_INDEX].ToString().TrimAllExtraSpace())));
 
             ICollection<DataRow> headerRows = new List<DataRow>();
-            foreach (DataRow headerRow in headerRecords) {
+            foreach (DataRow headerRow in headerRecords)
+            {
                 int rowIndex = result.Rows.IndexOf(headerRow);
-                DataRow tempRow = result.Rows[rowIndex + 1];
+                rowIndex = rowIndex + 1;
+                departmentReportGeneratorService.SetDepartmentTemplateHeadersIndexes(rowIndex);
+                DataRow tempRow = result.Rows[rowIndex];
                 headerRows.Add(tempRow);
             }
 

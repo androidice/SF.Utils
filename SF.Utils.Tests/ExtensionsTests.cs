@@ -30,6 +30,7 @@ namespace SF.Utils.Tests
             DateTime date = new DateTime(2020, 6, 3);// can be any date on weekday
             Assert.True(!date.IsWeekEnd());
         }
+
     }
 
     public class StringExtensionsTests
