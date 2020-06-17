@@ -1,17 +1,188 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v2.2",
-    "signature": "604e92811bbebe7a878b74700ad1918448678317"
+    "signature": "a6ad0e29ad6c1324f933acde33a014c70140ce7e"
   },
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v2.2": {
       "smartfactory.test/1.0.0": {
         "dependencies": {
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Console": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Debug": "5.0.0-preview.5.20278.1",
           "SF.Utils": "1.0.0"
         },
         "runtime": {
           "smartfactory.test.dll": {}
+        }
+      },
+      "Microsoft.Bcl.AsyncInterfaces/1.0.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Bcl.AsyncInterfaces.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "4.700.19.46214"
+          }
+        }
+      },
+      "Microsoft.Extensions.Configuration/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Primitives": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Configuration.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Configuration.Abstractions/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Configuration.Abstractions.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Configuration.Binder/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Configuration.Binder.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "1.0.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyInjection.Abstractions/5.0.0-preview.5.20278.1": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Options": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/5.0.0-preview.5.20278.1": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Configuration/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Configuration": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Configuration.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Configuration.Binder": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Options": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Options.ConfigurationExtensions": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.Configuration.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Console/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Configuration": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Options": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.Console.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Debug/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Abstractions": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.Debug.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Options/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Primitives": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Options.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Options.ConfigurationExtensions/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "Microsoft.Extensions.Configuration.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Configuration.Binder": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Options": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Primitives": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Primitives/5.0.0-preview.5.20278.1": {
+        "dependencies": {
+          "System.Runtime.CompilerServices.Unsafe": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Primitives.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
         }
       },
       "Microsoft.Win32.SystemEvents/4.5.0": {
@@ -109,6 +280,14 @@
           }
         }
       },
+      "System.Runtime.CompilerServices.Unsafe/5.0.0-preview.5.20278.1": {
+        "runtime": {
+          "lib/netcoreapp2.0/System.Runtime.CompilerServices.Unsafe.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
       "System.Security.AccessControl/4.5.0": {
         "dependencies": {
           "System.Security.Principal.Windows": "4.5.0"
@@ -161,6 +340,9 @@
       },
       "SF.Utils/1.0.0": {
         "dependencies": {
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Console": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Debug": "5.0.0-preview.5.20278.1",
           "NPOI": "2.5.1"
         },
         "runtime": {
@@ -174,6 +356,104 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "Microsoft.Bcl.AsyncInterfaces/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-K63Y4hORbBcKLWH5wnKgzyn7TOfYzevIEwIedQHBIkmkEBA9SCqgvom+XTuE+fAFGvINGkhFItaZ2dvMGdT5iw==",
+      "path": "microsoft.bcl.asyncinterfaces/1.0.0",
+      "hashPath": "microsoft.bcl.asyncinterfaces.1.0.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Configuration/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6sBFiQmpa878AOHtKWIIUGpjzDgLhDt0VqD/hdVCeJN0a5UfRQaHgk9sL4FuXKIMbDmJeFzcV8O9xBoMFsaLig==",
+      "path": "microsoft.extensions.configuration/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.configuration.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Configuration.Abstractions/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EjEJWmpb8UVu5L3JVX9d3VyrMi3dRvyMpMovyWJiU9x9kx1Pbaqho6SQ3n+UjlF+W2r4Tfnt8cH0xewSb6tHyg==",
+      "path": "microsoft.extensions.configuration.abstractions/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.configuration.abstractions.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Configuration.Binder/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dtYTfe/fZ+BjNH8uCbBoP/tobflNi1Tpd2dTE4qO8JuHYn5i5auhj/2x7qkkIAfl/RQgeHYFHIstRNzKxAnotA==",
+      "path": "microsoft.extensions.configuration.binder/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.configuration.binder.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zhlFF1unQMjUm2Po2/7AZOc0xXOJEZYAp4OzzicgjGivdM2M1M4ANLvOpxJS4HDXiNaqA6UocBZiHZwBhIqhdg==",
+      "path": "microsoft.extensions.dependencyinjection/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.dependencyinjection.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.DependencyInjection.Abstractions/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-UC1TJFMurcsp8xemvdgC6RRMSgJykvxh1O7iVaJzuOEMWCTj7jpkZWHdDj4ZKUu4RsNssRD52JINgRQEjsIdPA==",
+      "path": "microsoft.extensions.dependencyinjection.abstractions/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-04Si98HD4cNvlKtkA6SHELUrD01V4uCOxHQjnfb65uvp8XMhaQKzs8BqyZK1jtZOzDzAgNs/8JkE2GjwErEF2w==",
+      "path": "microsoft.extensions.logging/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.logging.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HAkbqxRWDjfG2fLh1RaJ/vv8TSAoA0fnTp1/ZmazPFIrVPhZK3lyXj77tWmhz9qpwuXnmjoY3OHsG1QQNBdEtw==",
+      "path": "microsoft.extensions.logging.abstractions/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.logging.abstractions.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Configuration/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oFsLNc5n0uE6XfTqJBfBdnZLcz6IdfmOiGPm+2Fo641zDgPWWZpxep0StsHsxx/CoZLTIi7zm8UM7ibyrfqEhQ==",
+      "path": "microsoft.extensions.logging.configuration/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.logging.configuration.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Console/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8n+Mc0vm8y7wf2LbPef25pbm1kK4/W4DSfy5Fg1njx90nKj5o8wUjBtKuRFoOQrtFrsix/XAVSounUMMj0AsMA==",
+      "path": "microsoft.extensions.logging.console/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.logging.console.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Debug/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oOxp+rF4g18ZllT6RVzyRU4BVe4myhSh7foISlrlkcV2I+4B5dbgzJCyqdz7hOFtjzf/TRR96476mM5e9fCg8w==",
+      "path": "microsoft.extensions.logging.debug/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.logging.debug.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Options/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pq5kf99y/emD1vWvXj1ovRYZKcO6jfgDnBn6GQvtJkjsJSAPXCyirk1j4/SNSSt3BoMTKvvB/z6ABm3pyFQVfw==",
+      "path": "microsoft.extensions.options/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.options.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Options.ConfigurationExtensions/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gy704RMj7ibxHbQW75F7p4CKyWhVuLCdHTHUQ4dBMzrxbJz16k7N762M/EwoQLvNERXR5UT4jZXIWrDIrBFclg==",
+      "path": "microsoft.extensions.options.configurationextensions/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.options.configurationextensions.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Primitives/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8TAqAcReJAsMwIejph1mmmMX5uIXVQxzgBtiNn/4n/pDLWtPlKAlsYlZ+sO729MyleUqp7NeowuxD8CNBTMGCQ==",
+      "path": "microsoft.extensions.primitives/5.0.0-preview.5.20278.1",
+      "hashPath": "microsoft.extensions.primitives.5.0.0-preview.5.20278.1.nupkg.sha512"
     },
     "Microsoft.Win32.SystemEvents/4.5.0": {
       "type": "package",
@@ -216,6 +496,13 @@
       "sha512": "sha512-AiJFxxVPdeITstiRS5aAu8+8Dpf5NawTMoapZ53Gfirml24p7HIfhjmCRxdXnmmf3IUA3AX3CcW7G73CjWxW/Q==",
       "path": "system.drawing.common/4.5.0",
       "hashPath": "system.drawing.common.4.5.0.nupkg.sha512"
+    },
+    "System.Runtime.CompilerServices.Unsafe/5.0.0-preview.5.20278.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+ry15FgWJdRkh+bNrQsXVQfsCsrp0DtYZr6t532ZUco9OO9LiTayyhDMtr/mKuBAHItUgc4QCuhSqMCUhsV0Cw==",
+      "path": "system.runtime.compilerservices.unsafe/5.0.0-preview.5.20278.1",
+      "hashPath": "system.runtime.compilerservices.unsafe.5.0.0-preview.5.20278.1.nupkg.sha512"
     },
     "System.Security.AccessControl/4.5.0": {
       "type": "package",

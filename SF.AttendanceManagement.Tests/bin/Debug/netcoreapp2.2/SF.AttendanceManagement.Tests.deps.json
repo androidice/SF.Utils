@@ -1,7 +1,7 @@
 {
   "runtimeTarget": {
     "name": ".NETCoreApp,Version=v2.2",
-    "signature": "6c18b1952f783ef5be00b179da3fcd3293f415dc"
+    "signature": "3209d88353a1935d6c6c62497ef1bb0ae1052bc3"
   },
   "compilationOptions": {},
   "targets": {
@@ -195,6 +195,17 @@
           "lib/netstandard2.0/Microsoft.Extensions.Logging.Console.dll": {
             "assemblyVersion": "5.0.0.0",
             "fileVersion": "5.0.20.27801"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Debug/3.1.5": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.Extensions.Logging.Debug.dll": {
+            "assemblyVersion": "3.1.5.0",
+            "fileVersion": "3.100.520.27009"
           }
         }
       },
@@ -1391,6 +1402,9 @@
       },
       "SF.Utils/1.0.0": {
         "dependencies": {
+          "Microsoft.Extensions.Logging": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Console": "5.0.0-preview.5.20278.1",
+          "Microsoft.Extensions.Logging.Debug": "3.1.5",
           "NPOI": "2.5.1"
         },
         "runtime": {
@@ -1502,6 +1516,13 @@
       "sha512": "sha512-8n+Mc0vm8y7wf2LbPef25pbm1kK4/W4DSfy5Fg1njx90nKj5o8wUjBtKuRFoOQrtFrsix/XAVSounUMMj0AsMA==",
       "path": "microsoft.extensions.logging.console/5.0.0-preview.5.20278.1",
       "hashPath": "microsoft.extensions.logging.console.5.0.0-preview.5.20278.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Debug/3.1.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-oDs0vlr6tNm0Z4U81eiCvnX+9zSP1CBAIGNAnpKidLb1KzbX26UGI627TfuIEtvW9wYiQWqZtmwMMK9WHE8Dqg==",
+      "path": "microsoft.extensions.logging.debug/3.1.5",
+      "hashPath": "microsoft.extensions.logging.debug.3.1.5.nupkg.sha512"
     },
     "Microsoft.Extensions.Options/5.0.0-preview.5.20278.1": {
       "type": "package",

@@ -13,6 +13,8 @@ using SF.AttendanceManagement.Models.ResponseModel;
 using SF.AttendanceManagement.Services;
 using SF.AttendanceManagement.Models.General;
 using Microsoft.Extensions.Logging;
+using SF.Utils.Services;
+using SF.Utils.Services.Logger;
 
 namespace SF.AttendanceManagement
 {
@@ -20,10 +22,12 @@ namespace SF.AttendanceManagement
     {
         private readonly IWorkBookConverter workbookConverter = new WorkBookConverter();
         private readonly IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
-        private readonly ILogger<AttendanceManagement> logger = new LoggerFactory().CreateLogger<AttendanceManagement>();
+        private readonly ILogger<AttendanceManagement> logger;
 
-        public AttendanceManagement() {
-           
+        public AttendanceManagement()
+        {
+            ILoggerService loggerService = new LoggerService();
+            logger = loggerService.CreateLogger<AttendanceManagement>();
         }
 
         public AttendanceManagement(ILogger<AttendanceManagement> logger)
@@ -32,7 +36,7 @@ namespace SF.AttendanceManagement
         }
 
         private readonly int STANDARD_WORKING_HOURS = 8;
-   
+
         public IDepartmentReportGeneratorService GetDepartmentReportGeneratorService()
         {
             return departmentReportGeneratorService;
@@ -93,13 +97,17 @@ namespace SF.AttendanceManagement
             const int NAME_INDEX = 1;
 
             int serialNo = 1;
-            
+
 
             string errorMsg = string.Empty;
+            int totalRecord = departmentRecords.Rows.Count;
+            int totalTransfer = 0;
+            int transferPercentage = 0;
 
             foreach (DataRow departmentRecord in departmentRecords.Rows)
             {
                 int date_index = 2;
+                transferPercentage = (totalTransfer / totalRecord) * 100;
 
                 string employeeName = string.Empty;
                 string departmentName = string.Empty;
@@ -117,6 +125,8 @@ namespace SF.AttendanceManagement
 
                 int rowIndex = departmentRecords.Rows.IndexOf(departmentRecord);
                 bool isHeaderIndex = departmentReportGeneratorService.IsDepartmetTemplateHeader(rowIndex);
+
+                logger.LogInformation("Processing {0} ({1} out of {2}) - {3}%", departmentRecords.TableName, totalTransfer, totalRecord, transferPercentage);
 
                 if (!isHeaderIndex)
                 {
@@ -140,20 +150,28 @@ namespace SF.AttendanceManagement
                                     {
                                         ICollection<DataRow> _employee_records = employee_login_records.EmployeeRecords;
 
-                                        departmentName = _employee_records.FirstOrDefault()[DEPARTMENT_INDEX].ToString();
-                                        IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
-                                        decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
+                                        if (_employee_records.Count() > 0)
+                                        {
+                                            departmentName = _employee_records.FirstOrDefault()[DEPARTMENT_INDEX].ToString();
+                                            IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
+                                            decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
 
-                                        if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd()) // for weekday overtime
-                                            weekDayOvertime = worked_hours - STANDARD_WORKING_HOURS;
-                                        else if (worked_hours > STANDARD_WORKING_HOURS && current_date.IsWeekEnd()) //  for weekend overtime
-                                            weekEndOvertime = worked_hours - STANDARD_WORKING_HOURS;
-                                        else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
-                                            offInLiue = STANDARD_WORKING_HOURS - worked_hours;
+                                            if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd()) // for weekday overtime
+                                                weekDayOvertime = worked_hours - STANDARD_WORKING_HOURS;
+                                            else if (worked_hours > STANDARD_WORKING_HOURS && current_date.IsWeekEnd()) //  for weekend overtime
+                                                weekEndOvertime = worked_hours - STANDARD_WORKING_HOURS;
+                                            else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
+                                                offInLiue = STANDARD_WORKING_HOURS - worked_hours;
 
-                                        if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
-                                        if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
-                                        //TODO for half midshift and half night shift  determine how much night time and how much half time
+                                            if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
+                                            if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
+                                            //TODO for half midshift and half night shift  determine how much night time and how much half time
+                                        }
+                                        else
+                                        {
+                                            //TODO: record no employee record
+                                            logger.LogError(string.Format("Employee {0} reported {1} but shows no record on {2}", employeeName, reported_attendance, current_date));
+                                        }
                                     }
                                     else
                                     {
@@ -161,15 +179,21 @@ namespace SF.AttendanceManagement
                                         {
                                             case "NoGuardRoomRecord":
                                                 //TODO: Record no guard room entry for the employee
+                                                logger.LogError(string.Format("Employee {0} reported {1} but shows no guard room record on {2}", employeeName, reported_attendance, current_date));
                                                 break;
                                             case "NoReport":
                                                 //TODO: Record the employee has no login or logout
+                                                logger.LogError(string.Format("Employee {0} reported {1} but shows no login records on {2}", employeeName, reported_attendance, current_date));
                                                 break;
                                             case "NoLogOut":
                                                 //TODO: Login has no matching logout
+                                                const int DATE_INDEX = 9;
+                                                DataRow reported = employee_login_records.EmployeeRecords.FirstOrDefault();
+                                                logger.LogError(string.Format("Employee {0} reported {1} login but shows no logout on {2}", employeeName, reported[DATE_INDEX], current_date));
                                                 break;
                                             case "InvalidTimeLog":
                                                 //TODO: Employee guard room records contains not pairing login and logout, for multiple entries
+                                                logger.LogError(string.Format("Employee {0} reported {1} but shows invalid time logs on {2}", employeeName, reported_attendance, current_date));
                                                 break;
                                         }
                                     }
@@ -177,6 +201,7 @@ namespace SF.AttendanceManagement
                                 else
                                 {
                                     // TODO: record the reported schedule as not supported symbol
+                                    logger.LogError(string.Format("Employee {0} recorded {1} on {2} which is not supported", employeeName, reported_attendance, current_date));
                                 }
 
                             }
@@ -212,6 +237,7 @@ namespace SF.AttendanceManagement
                     }
                 }
                 date_index++;
+                totalTransfer++;
             }
 
             return overtimeReport;
@@ -247,7 +273,7 @@ namespace SF.AttendanceManagement
             throw new NotImplementedException();
         }
 
-       
+
 
         public IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files)
         {
