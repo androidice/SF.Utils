@@ -150,7 +150,7 @@ namespace SF.AttendanceManagement.Tests
         }
 
         [Fact]
-        public void GENERATE_OVERTIME_REPORT_SHOULD_RECORD_OVERTIME_FROM_MORNING_SHIFT() {
+        public void GENERATE_OVERTIME_REPORT() {
 
            
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
@@ -164,9 +164,9 @@ namespace SF.AttendanceManagement.Tests
             {
                 ReportDateString = "2020-04-01",
                 DepartmentFilePaths = new List<string>() {
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年控制阀4月考勤.xlsx"
+                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\2020年控制阀4月考勤.xlsx"
                 },
-                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月门卫打卡数据.xls"
+                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\4月门卫打卡数据.xls"
             });
             Assert.True(true); // update later
         }
