@@ -207,8 +207,8 @@ namespace SF.AttendanceManagement.Services
         public EmployeeGuardRoomModel GetEmployeeRecordFromGuardRoom(DataTable guardRoomTable, string employeeName, string reported_schedule, decimal reported_worked_hours, DateTime current_date)
         {
             const int NAME_INDEX = 3;
-            const int DATE_TIME_INDEX = 9;
             const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+            const int DATE_TIME_INDEX = 9;
             string errMsg = string.Empty;
 
             employeeName = employeeName.TrimAllExtraSpace();
@@ -237,53 +237,13 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = empRecords.Where(row =>
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
-                                                    );
+                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                if (empRecords.Count() == 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "NoReport"
-                    };
-                }
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                if (validationResult != null)
+                    return validationResult;
 
-                if (empRecords.Count() == 1)//no matching logout
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        EmployeeRecords = empRecords.ToList(),
-                        Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
-                    };
-                }
-
-                if (Decimal.Remainder(empRecords.Count(), 2) != 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "InvalidTimeLog"
-                    };
-                }
-
-                DataRow first_entry = empRecords.FirstOrDefault();
-                DataRow second_entry = empRecords.LastOrDefault();
-
-                DateTime login = DateTime.ParseExact(
-                                        NormalizeLoginByScheduleToStringFormat(
-                                                DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
-                                                login_schedule),
-                                                DATE_TIME_FORMAT,
-                                                CultureInfo.CurrentCulture); ;
-
-                DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
-                                        DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
-                                        ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-
-                first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
-                second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
+                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, login_schedule);
             }
             else if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT))
             {
@@ -298,53 +258,13 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = empRecords.Where(row =>
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
-                                                    );
+                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                if (empRecords.Count() == 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "NoReport"
-                    };
-                }
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                if (validationResult != null)
+                    return validationResult;
 
-                if (empRecords.Count() == 1)//no matching logout
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        EmployeeRecords = empRecords.ToList(),
-                        Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
-                    };
-                }
-
-                if (Decimal.Remainder(empRecords.Count(), 2) != 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "InvalidTimeLog"
-                    };
-                }
-
-                DataRow first_entry = empRecords.FirstOrDefault();
-                DataRow second_entry = empRecords.LastOrDefault();
-
-                DateTime login = DateTime.ParseExact(
-                                        NormalizeLoginByScheduleToStringFormat(
-                                                DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
-                                                login_schedule),
-                                                DATE_TIME_FORMAT,
-                                                CultureInfo.CurrentCulture); ;
-
-                DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
-                                        DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
-                                        ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-
-                first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
-                second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
+                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, logout_schedule);
             }
             else if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT))
             {
@@ -360,53 +280,13 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = empRecords.Where(row =>
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
-                                                    DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
-                                                    );
+                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                if (empRecords.Count() == 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "NoReport"
-                    };
-                }
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                if (validationResult != null)
+                    return validationResult;
 
-                if (empRecords.Count() == 1)//no matching logout
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        EmployeeRecords = empRecords.ToList(),
-                        Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
-                    };
-                }
-
-                if (Decimal.Remainder(empRecords.Count(), 2) != 0)
-                {
-                    return new EmployeeGuardRoomModel()
-                    {
-                        Message = "InvalidTimeLog"
-                    };
-                }
-
-                DataRow first_entry = empRecords.FirstOrDefault();
-                DataRow second_entry = empRecords.LastOrDefault();
-
-                DateTime login = DateTime.ParseExact(
-                                        NormalizeLoginByScheduleToStringFormat(
-                                                DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
-                                                login_schedule),
-                                                DATE_TIME_FORMAT,
-                                                CultureInfo.CurrentCulture); ;
-
-                DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
-                                        DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
-                                        ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-
-                first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
-                second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
+                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, logout_schedule);
             }
             else if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
             {
@@ -415,108 +295,104 @@ namespace SF.AttendanceManagement.Services
                 string[] schedule1 = "20:00:00-08:00:00".Split('-');
                 string[] schedule2 = "16:00:00-04:00:00".Split('-');
 
-                string str_current_start_schedule = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), schedule1[0]);
-                string str_current_end_schedule = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), schedule1[1]);
+                string str_current_start_schedule1 = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), schedule1[0]);
+                string str_current_end_schedule1 = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), schedule1[1]);
 
-                DateTime login_schedule = DateTime.ParseExact(str_current_start_schedule, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-                DateTime logout_schedule = DateTime.ParseExact(str_current_end_schedule, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                DateTime login_schedule1 = DateTime.ParseExact(str_current_start_schedule1, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                DateTime logout_schedule1 = DateTime.ParseExact(str_current_end_schedule1, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
 
-                DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
-                DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
+                DateTime start_date_range1 = login_schedule1.AddHours(LOGIN_MIN_BUFFER * -1);
+                DateTime end_date_range1 = login_schedule1.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                IEnumerable<DataRow> query1 = empRecords.Where(row =>
-                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
-                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
-                                                   );
+                /*query for first schedule*/
+                IEnumerable<DataRow> firstShiftQuery = QueryEmployeeRecords(empRecords, start_date_range1, end_date_range1);
 
-                if (query1.Count() == 0) {
+                string str_current_start_schedule2 = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), schedule2[0]);
+                string str_current_end_schedule2 = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), schedule2[1]);
+
+                DateTime login_schedule2 = DateTime.ParseExact(str_current_start_schedule2, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                DateTime logout_schedule2 = DateTime.ParseExact(str_current_end_schedule2, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+
+                DateTime start_date_range2 = login_schedule2.AddHours(LOGIN_MIN_BUFFER * -1);
+                DateTime end_date_range2 = login_schedule2.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
+
+                IEnumerable<DataRow> secondShiftQuery = QueryEmployeeRecords(empRecords, start_date_range2, end_date_range2);
+
+                bool isFirstSchedule = false;
+                bool isSecondSchedule = false;
+
+                if (firstShiftQuery.Count() > 0)
+                {
+                    string maxLoginShed = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), "20:30:00");
+                    DateTime maxLogin =  DateTime.ParseExact(maxLoginShed, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+
+                    string loginStamp = firstShiftQuery.FirstOrDefault()[DATE_TIME_INDEX].ToString();
+                    DateTime loginEntry = DateTime.ParseExact(loginStamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                    isFirstSchedule = DateTime.Compare(loginEntry, maxLogin) <= 0;
+                }
+
+                if (secondShiftQuery.Count() > 0)
+                {
+                    string maxLoginShed = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), "16:30:00");
+                    DateTime maxLogin = DateTime.ParseExact(maxLoginShed, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+
+                    string loginStamp = secondShiftQuery.FirstOrDefault()[DATE_TIME_INDEX].ToString();
+                    DateTime loginEntry = DateTime.ParseExact(loginStamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                    isSecondSchedule = DateTime.Compare(loginEntry, maxLogin) <= 0;
+                }
+
+
+                if (isSecondSchedule && !isFirstSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) == 0)// to identify the record in guard room, that record should be paired
+                {
+                    empRecords = NormalizeLoginAndLogout(secondShiftQuery, login_schedule2, logout_schedule2);
                     return new EmployeeGuardRoomModel()
                     {
-                        Message = "NoReport"
+                        EmployeeRecords = empRecords.ToList(),
+                        Message = errMsg
                     };
                 }
 
-                if (Decimal.Remainder(query1.Count(), 2) == 0)
-                {//consider the first schedule
-                    DataRow first_entry = query1.FirstOrDefault();
-                    DataRow second_entry = query1.LastOrDefault();
 
-                    DateTime login = DateTime.ParseExact(
-                                            NormalizeLoginByScheduleToStringFormat(
-                                                    DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
-                                                    login_schedule),
-                                                    DATE_TIME_FORMAT,
-                                                    CultureInfo.CurrentCulture); ;
-
-                    DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
-                                            DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
-                                            ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-
-                    first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
-                    second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
-
-                    empRecords = query1;
-                }
-                else
-                {// consider the second schedule
-                    bool query1HasLogin = query1.Count() == 1;
-                    IEnumerable<DataRow> query1Copy = query1.ToList();
-
-                    str_current_start_schedule = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), schedule2[0]);
-                    str_current_end_schedule = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), schedule2[1]);
-
-                    login_schedule = DateTime.ParseExact(str_current_start_schedule, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-                    logout_schedule = DateTime.ParseExact(str_current_end_schedule, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-                    start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
-                    end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
-
-                    IEnumerable<DataRow> query2 = empRecords.Where(row =>
-                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
-                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
-                                                   );
-
-                    if (query1HasLogin && query2.Count() == 0) {
-                        return new EmployeeGuardRoomModel()
-                        {
-                            EmployeeRecords = query1Copy.ToList(),
-                            Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
-                        };
-                    }
-
-                    if (query2.Count() == 1) {
-                        return new EmployeeGuardRoomModel()
-                        {
-                            EmployeeRecords = query2.ToList(),
-                            Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
-                        };
-                    }
-
-                    if (Decimal.Remainder(query2.Count(), 2) == 0)
+                if (isFirstSchedule && !isSecondSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) == 0)// to identify the record in guard room, that record should be paired
+                {
+                    empRecords = NormalizeLoginAndLogout(firstShiftQuery, login_schedule1, logout_schedule1);
+                    return new EmployeeGuardRoomModel()
                     {
-                        DataRow first_entry = query2.FirstOrDefault();
-                        DataRow second_entry = query2.LastOrDefault();
+                        EmployeeRecords = empRecords.ToList(),
+                        Message = errMsg
+                    };
+                }
+                    
 
-                        DateTime login = DateTime.ParseExact(
-                                                NormalizeLoginByScheduleToStringFormat(
-                                                        DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
-                                                        login_schedule),
-                                                        DATE_TIME_FORMAT,
-                                                        CultureInfo.CurrentCulture); ;
-
-                        DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
-                                                DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
-                                                ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-
-
-                        first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
-                        second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
-
-                        empRecords = query2;
-                    }
+                if (!isFirstSchedule && !isSecondSchedule) {
+                    EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
+                    if (validationResult != null)
+                        return validationResult;
                 }
 
+                if (isSecondSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) != 0) {
+                    EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
+                    if (validationResult != null)
+                        return validationResult;
+                }
+
+                if (isFirstSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) != 0) {
+                    EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(firstShiftQuery);
+                    if (validationResult != null)
+                        return validationResult;
+                }
+
+                if (isSecondSchedule && secondShiftQuery.Count() == 1) {
+                    EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
+                    if (validationResult != null)
+                        return validationResult;
+                }
+
+                if (isFirstSchedule && firstShiftQuery.Count() == 1) {
+                    EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(firstShiftQuery);
+                    if (validationResult != null)
+                        return validationResult;
+                }        
             }
 
             return new EmployeeGuardRoomModel()
@@ -524,6 +400,74 @@ namespace SF.AttendanceManagement.Services
                 EmployeeRecords = empRecords.ToList(),
                 Message = errMsg
             };
+        }
+
+        private IEnumerable<DataRow> QueryEmployeeRecords(IEnumerable<DataRow> empRecords, DateTime start_date_range, DateTime end_date_range)
+        {
+            const int DATE_TIME_INDEX = 9;
+            const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+            IEnumerable<DataRow> records = empRecords.Where(row =>
+                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), start_date_range) >= 0 &&
+                                                   DateTime.Compare(DateTime.ParseExact(row[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture), end_date_range) <= 0
+                                                   );
+            return records;
+        }
+
+        private IEnumerable<DataRow> NormalizeLoginAndLogout(IEnumerable<DataRow> empRecords, DateTime login_schedule, DateTime logout_schedule)
+        {
+            const int DATE_TIME_INDEX = 9;
+            const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+            DataRow first_entry = empRecords.FirstOrDefault();
+            DataRow second_entry = empRecords.LastOrDefault();
+
+            DateTime login = DateTime.ParseExact(
+                                    NormalizeLoginByScheduleToStringFormat(
+                                            DateTime.ParseExact(first_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture),
+                                            login_schedule),
+                                            DATE_TIME_FORMAT,
+                                            CultureInfo.CurrentCulture); ;
+
+            DateTime logout = DateTime.ParseExact(NormalizeLogOutToStringFormat(
+                                    DateTime.ParseExact(second_entry[DATE_TIME_INDEX].ToString(), DATE_TIME_FORMAT, CultureInfo.CurrentCulture)
+                                    ), DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+
+
+            first_entry[DATE_TIME_INDEX] = login.ToString(DATE_TIME_FORMAT);
+            second_entry[DATE_TIME_INDEX] = logout.ToString(DATE_TIME_FORMAT);
+
+            return empRecords;
+        }
+
+        private EmployeeGuardRoomModel ValidateGuardRoomEntries(IEnumerable<DataRow> empRecords)
+        {
+            if (empRecords.Count() == 0)
+            {
+                return new EmployeeGuardRoomModel()
+                {
+                    Message = "NoReport"
+                };
+            }
+
+            if (empRecords.Count() == 1)//no matching logout
+            {
+                return new EmployeeGuardRoomModel()
+                {
+                    EmployeeRecords = empRecords.ToList(),
+                    Message = "NoLogOut" // should record the login time on report and record off in liue 8 hours
+                };
+            }
+
+            if (Decimal.Remainder(empRecords.Count(), 2) != 0) // to identify the record in guard room, that record should be paired
+            {
+                return new EmployeeGuardRoomModel()
+                {
+                    Message = "InvalidTimeLog"
+                };
+            }
+
+            return null;
         }
 
         public decimal[] Apply36HoursRule(decimal weekdayOt, decimal weekendOt)

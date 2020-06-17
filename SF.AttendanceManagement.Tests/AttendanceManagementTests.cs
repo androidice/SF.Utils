@@ -160,89 +160,15 @@ namespace SF.AttendanceManagement.Tests
                 new DateTime(2020,04,06)
             });// set holiday if any
 
-            //attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
-            //{
-            //    ReportDateString = "2020-04-01",
-            //    DepartmentFilePaths = new List<string>() {
-            //        @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\2020年控制阀4月考勤 - 2hrs overtime.xlsx"
-            //    },
-            //    GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\4月门卫打卡数据 - 2hrs overtime.xls"
-            //});
-
             attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
             {
                 ReportDateString = "2020-04-01",
                 DepartmentFilePaths = new List<string>() {
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\midshift\2020年控制阀4月考勤.xlsx"
+                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年控制阀4月考勤.xlsx"
                 },
-                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\midshift\4月门卫打卡数据.xls"
+                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月门卫打卡数据.xls"
             });
             Assert.True(true); // update later
         }
-
-        //[Fact]
-        //public void GENERATE_OVERTIME_REPORT_SHOULD_NOT_RECORD_WHEN_EXACTLY_EIGHT_HOURS_MORNING_SHIFT() {
-        //    IAttendanceManagement attendanceManagement = new AttendanceManagement();
-
-        //    attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
-        //    {
-        //        ReportDateString = "2020-04-01",
-        //        DepartmentFilePaths = new List<string>() {
-        //            @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\2020年控制阀4月考勤.xlsx"
-        //        },
-        //        GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\4月门卫打卡数据.xls"
-        //    });
-
-        //    Assert.True(true); // update later
-        //}
-
-        //[Fact]
-        //public void GENERATE_OVERTIME_REPORT_SHOULD_RECORD_UNDERTIME_FROM_MORNING_SHIFT()
-        //{
-        //    IAttendanceManagement attendanceManagement = new AttendanceManagement();
-
-        //    attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
-        //    {
-        //        ReportDateString = "2020-04-01",
-        //        DepartmentFilePaths = new List<string>() {
-        //            @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\2020年控制阀4月考勤 - 2hrs undertime.xlsx"
-        //        },
-        //        GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\4月门卫打卡数据 - 2hrs undertime.xls"
-        //    });
-
-        //    Assert.True(true); // update later
-        //}
-
-        //[Fact]
-        //public void GENERATE_OVERTIME_REPORT_FOR_MULTIPLE_ENTRIES_BUT_INVALID_LOGS()
-        //{
-        //    IAttendanceManagement attendanceManagement = new AttendanceManagement();
-
-        //    attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
-        //    {
-        //        ReportDateString = "2020-04-01",
-        //        DepartmentFilePaths = new List<string>() {
-        //            @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\2020年控制阀4月考勤.xlsx"
-        //        },
-        //        GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\4月门卫打卡数据 - multiple exit error logs.xls"
-        //    });
-        //}
-
-        //[Fact]
-        //public void GENERATE_OVERTIME_REPORT_FOR_MULIPLE_ENTRIES_AND_EXIT()
-        //{
-        //    IAttendanceManagement attendanceManagement = new AttendanceManagement();
-
-        //    attendanceManagement.GenerateDepertmentReport(new AttendanceFinancialReportInputModel()
-        //    {
-        //        ReportDateString = "2020-04-01",
-        //        DepartmentFilePaths = new List<string>() {
-        //            @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\2020年控制阀4月考勤.xlsx"
-        //        },
-        //        GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\morning shift\4月门卫打卡数据 - multiple exit.xls"
-        //    });
-
-        //    Assert.True(true);// update later
-        //}
     }
 }

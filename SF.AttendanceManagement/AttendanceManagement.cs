@@ -156,21 +156,24 @@ namespace SF.AttendanceManagement
                                             IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
                                             decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
 
-                                            if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd()) // for weekday overtime
-                                                weekDayOvertime = worked_hours - STANDARD_WORKING_HOURS;
-                                            else if (worked_hours > STANDARD_WORKING_HOURS && current_date.IsWeekEnd()) //  for weekend overtime
-                                                weekEndOvertime = worked_hours - STANDARD_WORKING_HOURS;
+                                            if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd() && !departmentReportGeneratorService.IsHoliday(current_date)) // for weekday overtime
+                                                weekDayOvertime = weekDayOvertime + (worked_hours - STANDARD_WORKING_HOURS);
+                                            else if (current_date.IsWeekEnd() || departmentReportGeneratorService.IsHoliday(current_date)) //  for weekend overtime
+                                                weekEndOvertime = weekEndOvertime + worked_hours;
                                             else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
-                                                offInLiue = STANDARD_WORKING_HOURS - worked_hours;
+                                                offInLiue = offInLiue + (STANDARD_WORKING_HOURS - worked_hours);
 
                                             if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
                                             if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
-                                            //TODO for half midshift and half night shift  determine how much night time and how much half time
+                                            if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT)) {
+                                                midShiftCount = midShiftCount + GetMidShiftCount(_employee_records, current_date);
+                                                nightShiftCount = nightShiftCount + GetNightShiftCount(_employee_records, current_date);
+                                            }
                                         }
                                         else
                                         {
                                             //TODO: record no employee record
-                                            logger.LogError(string.Format("Employee {0} reported {1} but shows no record on {2}", employeeName, reported_attendance, current_date));
+                                            logger.LogError(string.Format("Employee {0} reported {1} but unable to match any records on {2}", employeeName, reported_attendance, current_date));
                                         }
                                     }
                                     else
@@ -179,7 +182,7 @@ namespace SF.AttendanceManagement
                                         {
                                             case "NoGuardRoomRecord":
                                                 //TODO: Record no guard room entry for the employee
-                                                logger.LogError(string.Format("Employee {0} reported {1} but shows no guard room record on {2}", employeeName, reported_attendance, current_date));
+                                                logger.LogError(string.Format("Employee {0} reported {1} on {2} but shows no guard room record", employeeName, reported_attendance, current_date));
                                                 break;
                                             case "NoReport":
                                                 //TODO: Record the employee has no login or logout
@@ -205,42 +208,77 @@ namespace SF.AttendanceManagement
                                 }
 
                             }
-                            //new DataColumn("serialNo"),
-                            //new DataColumn("empName"),
-                            //new DataColumn("department"),
-                            //new DataColumn("weekDayOverTime"),
-                            //new DataColumn("weekEndOverTime"),
-                            //new DataColumn("nightShiftCount"),
-                            //new DataColumn("midShiftCount"),
-                            //new DataColumn("medicalLeave"),
-                            //new DataColumn("noPayLeave"),
-                            //new DataColumn("annualLeave"),
-                            //new DataColumn("offInLiue"),
-                            //new DataColumn("changeHour")
-                            tempRow["serialNo"] = serialNo;
-                            tempRow["empName"] = employeeName;
-                            tempRow["department"] = departmentName;
-                            tempRow["weekDayOverTime"] = weekDayOvertime;
-                            tempRow["weekEndOverTime"] = weekEndOvertime;
-                            tempRow["nightShiftCount"] = nightShiftCount;
-                            tempRow["midShiftCount"] = midShiftCount;
-                            tempRow["medicalLeave"] = medicalLeave;
-                            tempRow["noPayLeave"] = noPayLeave;
-                            tempRow["annualLeave"] = annualLeave;
-                            tempRow["offInLiue"] = offInLiue;
-                            tempRow["changeHour"] = changeHour;
 
-                            serialNo++;
+                            date_index++;
                         }
 
+                        //new DataColumn("serialNo"),
+                        //new DataColumn("empName"),
+                        //new DataColumn("department"),
+                        //new DataColumn("weekDayOverTime"),
+                        //new DataColumn("weekEndOverTime"),
+                        //new DataColumn("nightShiftCount"),
+                        //new DataColumn("midShiftCount"),
+                        //new DataColumn("medicalLeave"),
+                        //new DataColumn("noPayLeave"),
+                        //new DataColumn("annualLeave"),
+                        //new DataColumn("offInLiue"),
+                        //new DataColumn("changeHour")
+                        tempRow["serialNo"] = serialNo;
+                        tempRow["empName"] = employeeName;
+                        tempRow["department"] = departmentName;
+                        tempRow["weekDayOverTime"] = weekDayOvertime;
+                        tempRow["weekEndOverTime"] = weekEndOvertime;
+                        tempRow["nightShiftCount"] = nightShiftCount;
+                        tempRow["midShiftCount"] = midShiftCount;
+                        tempRow["medicalLeave"] = medicalLeave;
+                        tempRow["noPayLeave"] = noPayLeave;
+                        tempRow["annualLeave"] = annualLeave;
+                        tempRow["offInLiue"] = offInLiue;
+                        tempRow["changeHour"] = changeHour;
                         overtimeReport.Rows.Add(tempRow);
+
+                        serialNo++;
                     }
                 }
-                date_index++;
+     
                 totalTransfer++;
             }
 
             return overtimeReport;
+        }
+
+        private decimal GetMidShiftCount(ICollection<DataRow> employee_records, DateTime current_date)
+        {
+            const int DATE_TIME_INDEX = 9;
+            const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+            decimal count = 0;
+            string midnight_timestamp = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), "00:00:00");
+            string logintimestamp = employee_records.FirstOrDefault()[DATE_TIME_INDEX].ToString();
+
+            DateTime login_entry = DateTime.ParseExact(logintimestamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+            DateTime midnight_mark = DateTime.ParseExact(midnight_timestamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+            TimeSpan diff = midnight_mark.Subtract(login_entry);
+            count = STANDARD_WORKING_HOURS / diff.Hours;
+            count = 1 / count;
+            return count;
+        }
+
+
+        public decimal GetNightShiftCount(ICollection<DataRow> employee_records, DateTime current_date)
+        {
+            const int DATE_TIME_INDEX = 9;
+            const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+            decimal count = 0;
+            string midnight_timestamp = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), "00:00:00");
+            string logouttimestamp = employee_records.LastOrDefault()[DATE_TIME_INDEX].ToString();
+            DateTime logout_entry = DateTime.ParseExact(logouttimestamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+            DateTime midnight_mark = DateTime.ParseExact(midnight_timestamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+
+            TimeSpan diff = logout_entry.Subtract(midnight_mark);
+            count = STANDARD_WORKING_HOURS / diff.Hours;
+            count = 1 / count;
+            return count;
         }
 
         public void PrepareSettlementmentReport()

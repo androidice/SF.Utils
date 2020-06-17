@@ -463,7 +463,7 @@ namespace SF.AttendanceManagement.Tests
 
             string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
             decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 02);
+            DateTime date = new DateTime(2020, 04, 03);
             string employeeName = "邓建平";
             DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据.xls");
 
@@ -480,9 +480,9 @@ namespace SF.AttendanceManagement.Tests
 
             string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
             decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 01);
+            DateTime date = new DateTime(2020, 04, 02);
             string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据.xls");
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据-2nd shift.xls");
 
             EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
 
@@ -491,24 +491,7 @@ namespace SF.AttendanceManagement.Tests
 
 
         [Fact]
-        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_RECORD_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_2nd_SHIFT() {
-            IAttendanceManagement attendanceManagement = new AttendanceManagement();
-            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
-
-            string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
-            decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 01);
-            string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据-no login records.xls");
-
-            EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
-
-            Assert.Equal("NoReport", result.Message);
-        }
-
-        [Fact]
-        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_RECORD_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_1st_SHIFT()
-        {
+        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_RECORD_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT() {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
 
@@ -516,47 +499,13 @@ namespace SF.AttendanceManagement.Tests
             decimal reported_worked_hours = 12;
             DateTime date = new DateTime(2020, 04, 02);
             string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据-no login records 1st shift.xls");
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - no login 2nd shift.xls");
 
             EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
 
             Assert.Equal("NoReport", result.Message);
         }
 
-
-        [Fact]
-        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_RECORD_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT()
-        {
-            IAttendanceManagement attendanceManagement = new AttendanceManagement();
-            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
-
-            string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
-            decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 02);
-            string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - no records.xls");
-
-            EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
-
-            Assert.Equal("NoGuardRoomRecord", result.Message);
-        }
-
-        [Fact]
-        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_LOGOUT_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_2ND_SHIFT()
-        {
-            IAttendanceManagement attendanceManagement = new AttendanceManagement();
-            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
-
-            string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
-            decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 01);
-            string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - 2nd shift no logout.xls");
-
-            EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
-
-            Assert.Equal("NoLogOut", result.Message);
-        }
 
         [Fact]
         public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_LOGOUT_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_1st_SHIFT()
@@ -568,28 +517,64 @@ namespace SF.AttendanceManagement.Tests
             decimal reported_worked_hours = 12;
             DateTime date = new DateTime(2020, 04, 02);
             string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - 1st shift no logout.xls");
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - no logout 1st shift.xls");
 
             EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
 
             Assert.Equal("NoLogOut", result.Message);
+            Assert.Equal(1, result.EmployeeRecords.Count);
         }
 
         [Fact]
-        public void GET_EMPLOYEE_RECORD_SHOULD_CHECK_INVALID_TIME_LOGS_FOR_HALF_MID_HALF_NIGHT_FOR_2nd_SHIFT()
+        public void GET_EMPLOYEE_RECORD_SHOULD_HANDLE_NO_LOGOUT_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_2ND_SHIFT()
         {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
 
             string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
             decimal reported_worked_hours = 12;
-            DateTime date = new DateTime(2020, 04, 01);
+            DateTime date = new DateTime(2020, 04, 03);
             string employeeName = "邓建平";
-            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - 2nd shift invalid timelogs.xls");
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - no logout 2nd shift.xls");
 
             EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
 
             Assert.Equal("NoLogOut", result.Message);
+            Assert.Equal(1, result.EmployeeRecords.Count);
+        }
+
+        [Fact]
+        public void GET_EMPLOYEE_RECORD_SHOULD_CHECK_FOR_INVALID_TIME_LOG_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_2ND_SHIFT()
+        {
+            IAttendanceManagement attendanceManagement = new AttendanceManagement();
+            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
+
+            string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
+            decimal reported_worked_hours = 12;
+            DateTime date = new DateTime(2020, 04, 03);
+            string employeeName = "邓建平";
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - 2nd shift invalid time log.xls");
+
+            EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
+
+            Assert.Equal("InvalidTimeLog", result.Message);
+        }
+
+        [Fact]
+        public void GET_EMPLOYEE_RECORD_SHOULD_CHECK_FOR_INVALID_TIME_LOG_FROM_GUARDROOM_FOR_HALF_MID_AND_HALF_NIGHT_FOR_1st_SHIFT()
+        {
+            IAttendanceManagement attendanceManagement = new AttendanceManagement();
+            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
+
+            string reported_schedule = EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT;
+            decimal reported_worked_hours = 12;
+            DateTime date = new DateTime(2020, 04, 02);
+            string employeeName = "邓建平";
+            DataTable guardRoomTable = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\half mid half night\4月门卫打卡数据 - 1st shift invalid time log.xls");
+
+            EmployeeGuardRoomModel result = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomTable, employeeName, reported_schedule, reported_worked_hours, date);
+
+            Assert.Equal("InvalidTimeLog", result.Message);
         }
     }
 }
