@@ -203,6 +203,60 @@ namespace SF.AttendanceManagement.Services
             return logout.ToString(DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
         }
 
+        public bool IsReportedScheduleIsException(string reported_schedule) {
+            bool isException = false;
+
+            isException = reported_schedule.Equals(EmployeeOff.MEDICAL_LEAVE);
+            isException = isException || reported_schedule.Equals(EmployeeOff.NO_PAY_LEAVE);
+            isException = isException || reported_schedule.Equals(EmployeeOff.ANNUAL_LEAVE);
+            isException = isException || reported_schedule.Equals(EmployeeOff.OFF_IN_LIUE);
+
+            return isException;
+        }
+
+        private EmployeeGuardRoomModel HandleExceptionCases(IEnumerable<DataRow> empRecords, string reported_schedule, DateTime current_date)
+        {
+            string message = string.Empty;
+            bool hasGuardRoomRecord = empRecords.Count() > 0;
+
+            if (hasGuardRoomRecord)
+            {
+                /*get the full range of possible time log, for this current date*/
+                DateTime start_range = current_date;
+                DateTime end_range = current_date.AddDays(1).AddSeconds(-1);
+                /*get the full range of possible time log, for this current date*/
+                IEnumerable<DataRow> queryResult = QueryEmployeeRecords(empRecords, start_range, end_range);
+
+                EmployeeGuardRoomModel validateResult = this.ValidateGuardRoomEntries(queryResult);
+                if (validateResult != null)
+                {
+                    if (validateResult.Message.Equals("NoReport"))
+                    {
+                        bool isMedicalLeave = reported_schedule.Equals(EmployeeOff.MEDICAL_LEAVE);
+                        bool isNoPayLeave = reported_schedule.Equals(EmployeeOff.NO_PAY_LEAVE);
+                        bool isAnnualLeave = reported_schedule.Equals(EmployeeOff.ANNUAL_LEAVE);
+                        bool isOffInLiue = reported_schedule.Equals(EmployeeOff.OFF_IN_LIUE);
+
+                        if (isMedicalLeave) message = EmployeeOff.MEDICAL_LEAVE;
+                        if (isNoPayLeave) message = EmployeeOff.NO_PAY_LEAVE;
+                        if (isAnnualLeave) message = EmployeeOff.ANNUAL_LEAVE;
+                        if (isOffInLiue) message = EmployeeOff.OFF_IN_LIUE;
+
+                        return new EmployeeGuardRoomModel()
+                        {
+                            Message = message
+                        };
+                    }
+                }
+                return validateResult;
+            }
+            else {
+                return new EmployeeGuardRoomModel()
+                {
+                    Message = "NoGuardRoomRecord"
+                };
+            }
+        }
 
         public EmployeeGuardRoomModel GetEmployeeRecordFromGuardRoom(DataTable guardRoomTable, string employeeName, string reported_schedule, decimal reported_worked_hours, DateTime current_date)
         {
@@ -210,13 +264,16 @@ namespace SF.AttendanceManagement.Services
             const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
             const int DATE_TIME_INDEX = 9;
             string errMsg = string.Empty;
+        
 
             employeeName = employeeName.TrimAllExtraSpace();
 
             IEnumerable<DataRow> empRecords = guardRoomTable.AsEnumerable()
                 .Where(row => row[NAME_INDEX].ToString().TrimAllExtraSpace().Equals(employeeName));
 
-            if (empRecords.Count() == 0)
+            bool isException = IsReportedScheduleIsException(reported_schedule);
+
+            if (!isException && empRecords.Count() == 0)
             {
                 return new EmployeeGuardRoomModel()
                 {
@@ -237,13 +294,60 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
+                IEnumerable<DataRow> resultQuery = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(resultQuery);
                 if (validationResult != null)
-                    return validationResult;
+                {
+                    if (validationResult.Message.Equals("NoLogOut"))
+                    {
+                        /**
+                         * To Handle case where the default query results to no logout, but find any instance login and logout
+                         * instance within the schedule
+                         */
+                        string loginstamp = validationResult.EmployeeRecords.FirstOrDefault()[DATE_TIME_INDEX].ToString();
+                        DateTime loginEntry = DateTime.ParseExact(loginstamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                        DateTime logoutRange = logout_schedule.AddHours(1);
+                        resultQuery = QueryEmployeeRecords(empRecords, loginEntry, logoutRange);
 
-                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, login_schedule);
+                        if (Decimal.Remainder(resultQuery.Count(), 2) == 0)
+                        {
+                            return new EmployeeGuardRoomModel()
+                            {
+                                EmployeeRecords = resultQuery.ToList(),
+                                Message = errMsg
+                            };
+                        }
+                    }
+
+                    if (validationResult.Message.Equals("InvalidTimeLog"))
+                    {
+                        /**
+                         * if found invalid time log from the default logout time, look out for the extension
+                         * of logout temporarily upto 1hour extension
+                         */
+                        const int MAXIMUM_LOGOUT_EXTENSION = 60;// set 30 min maximum extension after the schedule
+                        end_date_range = end_date_range.AddMinutes(MAXIMUM_LOGOUT_EXTENSION);
+
+                        resultQuery = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
+
+                        if (Decimal.Remainder(resultQuery.Count(), 2) == 0)
+                        {
+                            resultQuery = NormalizeLoginAndLogout(resultQuery, login_schedule, login_schedule);
+
+                            return new EmployeeGuardRoomModel()
+                            {
+                                EmployeeRecords = resultQuery.ToList(),
+                                Message = errMsg
+                            };
+                        }
+                    }
+                    return validationResult;
+                }
+
+
+                resultQuery = NormalizeLoginAndLogout(resultQuery, login_schedule, login_schedule);
+                empRecords = resultQuery;
             }
             else if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT))
             {
@@ -324,7 +428,7 @@ namespace SF.AttendanceManagement.Services
                 if (firstShiftQuery.Count() > 0)
                 {
                     string maxLoginShed = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), "20:30:00");
-                    DateTime maxLogin =  DateTime.ParseExact(maxLoginShed, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+                    DateTime maxLogin = DateTime.ParseExact(maxLoginShed, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
 
                     string loginStamp = firstShiftQuery.FirstOrDefault()[DATE_TIME_INDEX].ToString();
                     DateTime loginEntry = DateTime.ParseExact(loginStamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
@@ -362,39 +466,49 @@ namespace SF.AttendanceManagement.Services
                         Message = errMsg
                     };
                 }
-                    
 
-                if (!isFirstSchedule && !isSecondSchedule) {
+
+                if (!isFirstSchedule && !isSecondSchedule)
+                {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
                     if (validationResult != null)
                         return validationResult;
                 }
 
-                if (isSecondSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) != 0) {
+                if (isSecondSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) != 0)
+                {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
                     if (validationResult != null)
                         return validationResult;
                 }
 
-                if (isFirstSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) != 0) {
+                if (isFirstSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) != 0)
+                {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(firstShiftQuery);
                     if (validationResult != null)
                         return validationResult;
                 }
 
-                if (isSecondSchedule && secondShiftQuery.Count() == 1) {
+                if (isSecondSchedule && secondShiftQuery.Count() == 1)
+                {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
                     if (validationResult != null)
                         return validationResult;
                 }
 
-                if (isFirstSchedule && firstShiftQuery.Count() == 1) {
+                if (isFirstSchedule && firstShiftQuery.Count() == 1)
+                {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(firstShiftQuery);
                     if (validationResult != null)
                         return validationResult;
-                }        
+                }
             }
-
+            else if (isException)
+            {
+                EmployeeGuardRoomModel result = HandleExceptionCases(empRecords, reported_schedule, current_date);
+                return result;
+            }
+         
             return new EmployeeGuardRoomModel()
             {
                 EmployeeRecords = empRecords.ToList(),

@@ -145,71 +145,85 @@ namespace SF.AttendanceManagement
                                 decimal reported_worked_hours = departmentReportGeneratorService.GetReportedWorkedHours(reported_attendance, current_date);
                                 if (!string.IsNullOrEmpty(reported_schedule))
                                 {
-                                    if (reported_schedule.Equals(EmployeeShifts.MORNING_SHIFT) || reported_schedule.Equals(EmployeeShifts.MID_SHIFT) ||
-                                     reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT) || reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
+                                    EmployeeGuardRoomModel employee_login_records = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomRecords, employeeName, reported_schedule, reported_worked_hours, current_date);
+                                    if (string.IsNullOrEmpty(employee_login_records.Message))
                                     {
-                                        EmployeeGuardRoomModel employee_login_records = departmentReportGeneratorService.GetEmployeeRecordFromGuardRoom(guardRoomRecords, employeeName, reported_schedule, reported_worked_hours, current_date);
-                                        if (string.IsNullOrEmpty(employee_login_records.Message))
+                                        ICollection<DataRow> _employee_records = employee_login_records.EmployeeRecords;
+
+                                        if (_employee_records.Count() > 0)
                                         {
-                                            ICollection<DataRow> _employee_records = employee_login_records.EmployeeRecords;
+                                            departmentName = _employee_records.FirstOrDefault()[DEPARTMENT_INDEX].ToString();
+                                            IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
+                                            decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
 
-                                            if (_employee_records.Count() > 0)
+                                            if ((worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd()) || departmentReportGeneratorService.IsHoliday(current_date))
                                             {
-                                                departmentName = _employee_records.FirstOrDefault()[DEPARTMENT_INDEX].ToString();
-                                                IEnumerable<string> timestamps = _employee_records.Select(c => c[DATE_TIME_INDEX].ToString()).ToList();
-                                                decimal worked_hours = departmentReportGeneratorService.CalculateOvertimework(timestamps.ToList());
-
-                                                if (worked_hours > STANDARD_WORKING_HOURS && !current_date.IsWeekEnd() && !departmentReportGeneratorService.IsHoliday(current_date)) // for weekday overtime
+                                                if (!departmentReportGeneratorService.IsHoliday(current_date))
                                                     weekDayOvertime = weekDayOvertime + (worked_hours - STANDARD_WORKING_HOURS);
-                                                else if (current_date.IsWeekEnd() || departmentReportGeneratorService.IsHoliday(current_date)) //  for weekend overtime
-                                                    weekEndOvertime = weekEndOvertime + worked_hours;
-                                                else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
-                                                    offInLiue = offInLiue + (STANDARD_WORKING_HOURS - worked_hours);
+                                                else 
+                                                    weekDayOvertime = weekDayOvertime + worked_hours;
+                                            } // for weekday overtime
+                                            else if (current_date.IsWeekEnd()) //  for weekend overtime
+                                                weekEndOvertime = weekEndOvertime + worked_hours;
+                                            else if (worked_hours < STANDARD_WORKING_HOURS) // for weekend and week day undertime
+                                                offInLiue = offInLiue + (STANDARD_WORKING_HOURS - worked_hours);
 
-                                                if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
-                                                if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
-                                                if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
-                                                {
-                                                    midShiftCount = midShiftCount + GetMidShiftCount(_employee_records, current_date);
-                                                    nightShiftCount = nightShiftCount + GetNightShiftCount(_employee_records, current_date);
-                                                }
-                                            }
-                                            else
+                                            bool isException = departmentReportGeneratorService.IsReportedScheduleIsException(reported_schedule);
+                                            if (isException && worked_hours > 0)
+                                                logger.LogInformation(string.Format("Employee {0} reported {1}, but recorded {2}hour(s) of worked", employeeName, reported_schedule, worked_hours));
+
+                                            if (reported_schedule.Equals(EmployeeShifts.MID_SHIFT)) midShiftCount = midShiftCount + 1;
+                                            if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT)) nightShiftCount = nightShiftCount + 1;
+                                            if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
                                             {
-                                                //TODO: record no employee record
-                                                logger.LogError(string.Format("Employee {0} reported {1} but unable to match any records on {2}", employeeName, reported_attendance, current_date));
+                                                midShiftCount = midShiftCount + GetMidShiftCount(_employee_records, current_date);
+                                                nightShiftCount = nightShiftCount + GetNightShiftCount(_employee_records, current_date);
                                             }
                                         }
                                         else
                                         {
-                                            switch (employee_login_records.Message)
-                                            {
-                                                case "NoGuardRoomRecord":
-                                                    //TODO: Record no guard room entry for the employee
-                                                    logger.LogError(string.Format("Employee {0} reported {1} on {2} but shows no guard room record", employeeName, reported_attendance, current_date));
-                                                    break;
-                                                case "NoReport":
-                                                    //TODO: Record the employee has no login or logout
-                                                    logger.LogError(string.Format("Employee {0} reported {1} but shows no login records on {2}", employeeName, reported_attendance, current_date));
-                                                    break;
-                                                case "NoLogOut":
-                                                    //TODO: Login has no matching logout
-                                                    const int DATE_INDEX = 9;
-                                                    DataRow reported = employee_login_records.EmployeeRecords.FirstOrDefault();
-                                                    logger.LogError(string.Format("Employee {0} reported {1} login but shows no logout on {2}", employeeName, reported[DATE_INDEX], current_date));
-                                                    break;
-                                                case "InvalidTimeLog":
-                                                    //TODO: Employee guard room records contains not pairing login and logout, for multiple entries
-                                                    logger.LogError(string.Format("Employee {0} reported {1} but shows invalid time logs on {2}", employeeName, reported_attendance, current_date));
-                                                    break;
-                                            }
+                                            //TODO: record no employee record
+                                            logger.LogError(string.Format("Employee {0} reported {1} but unable to match any records on {2}", employeeName, reported_attendance, current_date.ToString("yyyy-MM-dd")));
                                         }
+                                    }
+                                    else
+                                    {
+                                        switch (employee_login_records.Message)
+                                        {
+                                            case "NoGuardRoomRecord":
+                                                //TODO: Record no guard room entry for the employee
+                                                logger.LogError(string.Format("Employee {0} reported {1} on {2} but shows no guard room record", employeeName, reported_schedule, current_date.ToString("yyyy-MM-dd")));
+                                                break;
+                                            case "NoReport":
+                                                //TODO: Record the employee has no login or logout
+                                                logger.LogError(string.Format("Employee {0} reported {1} but shows no login records on {2}", employeeName, reported_schedule, current_date.ToString("yyyy-MM-dd")));
+                                                break;
+                                            case "NoLogOut":
+                                                //TODO: Login has no matching logout
+                                                const int DATE_INDEX = 9;
+                                                DataRow reported = employee_login_records.EmployeeRecords.FirstOrDefault();
+                                                logger.LogError(string.Format("Employee {0} reported {1} login but shows no logout on {2}", employeeName, reported[DATE_INDEX], current_date.ToString("yyyy-MM-dd")));
+                                                break;
+                                            case "InvalidTimeLog":
+                                                //TODO: Employee guard room records contains not pairing login and logout, for multiple entries
+                                                logger.LogError(string.Format("Employee {0} reported {1} but shows invalid time logs on {2}", employeeName, reported_schedule, current_date.ToString("yyyy-MM-dd")));
+                                                break;   
+                                        }
+                                        bool isMedicalLeave = reported_schedule.Equals(EmployeeOff.MEDICAL_LEAVE);
+                                        bool isNoPayLeave = reported_schedule.Equals(EmployeeOff.NO_PAY_LEAVE);
+                                        bool isAnnualLeave = reported_schedule.Equals(EmployeeOff.ANNUAL_LEAVE);
+                                        bool isOffInLiue = reported_schedule.Equals(EmployeeOff.OFF_IN_LIUE);
+
+                                        if (isMedicalLeave) medicalLeave = medicalLeave + STANDARD_WORKING_HOURS;
+                                        if (isNoPayLeave) noPayLeave = noPayLeave + STANDARD_WORKING_HOURS;
+                                        if (isAnnualLeave) annualLeave = annualLeave + STANDARD_WORKING_HOURS;
+                                        if (isOffInLiue) offInLiue = offInLiue + STANDARD_WORKING_HOURS;
                                     }
                                 }
                                 else
                                 {
                                     // TODO: record the reported schedule as not supported symbol
-                                    logger.LogError(string.Format("Employee {0} recorded {1} on {2} which is not supported", employeeName, reported_attendance, current_date));
+                                    logger.LogError(string.Format("Employee {0} recorded {1} on {2} which is not supported", employeeName, reported_attendance, current_date.ToString("yyyy-MM-dd")));
                                 }
 
                             }

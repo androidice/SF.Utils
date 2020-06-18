@@ -272,6 +272,24 @@ namespace SF.AttendanceManagement.Tests
         }
 
         [Fact]
+        public void GET_REPORTED_WORKED_HOURS_FOR_LEAVES_AND_OFF_IN_LIUE()
+        {
+            string reported_attendance = "公休";
+            decimal worked_hours = 0;
+            IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
+            worked_hours = departmentReportGeneratorService.GetReportedWorkedHours(reported_attendance, new DateTime(2020, 06, 06));
+
+            Assert.Equal(0, worked_hours);
+
+            reported_attendance = "公休2";
+            worked_hours = 0;
+            departmentReportGeneratorService = new DepartmentReportGeneratorService();
+            worked_hours = departmentReportGeneratorService.GetReportedWorkedHours(reported_attendance, new DateTime(2020, 06, 06));
+
+            Assert.Equal(2, worked_hours);
+        }
+
+        [Fact]
         public void CAN_CHECK_IF_DATE_IS_HOLIDAY()
         {
             IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();

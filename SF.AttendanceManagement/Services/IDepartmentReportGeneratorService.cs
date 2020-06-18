@@ -13,6 +13,7 @@ namespace SF.AttendanceManagement.Services
 
         void SetDepartmentHolidays(IEnumerable<DateTime> dates);
         bool IsHoliday(DateTime current_date);
+        bool IsReportedScheduleIsException(string reported_schedule);
 
         EmployeeGuardRoomModel GetEmployeeRecordFromGuardRoom(DataTable guardRoomTable, string employeeName, string reported_schedule, decimal reported_worked_hours, DateTime current_date);
         string GetReportedAttendance(string reported_attendance);
