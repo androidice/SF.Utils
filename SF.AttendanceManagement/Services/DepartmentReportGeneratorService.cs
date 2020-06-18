@@ -304,48 +304,22 @@ namespace SF.AttendanceManagement.Services
                 EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(resultQuery);
                 if (validationResult != null)
                 {
-                    if (validationResult.Message.Equals("NoLogOut"))
-                    {
+                    DateTime start_range = new DateTime();
+                    DateTime end_range = new DateTime();
+
+                    if (validationResult.Message.Equals("InvalidTimeLog") || validationResult.Message.Equals("NoLogOut"))
+                    { 
                         /**
                          * To Handle case where the default query results to no logout, but find any instance login and logout
                          * instance within the schedule
                          */
-                        string loginstamp = validationResult.EmployeeRecords.FirstOrDefault()[DATE_TIME_INDEX].ToString();
-                        DateTime loginEntry = DateTime.ParseExact(loginstamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
-                        DateTime logoutRange = logout_schedule.AddHours(1);
-                        resultQuery = QueryEmployeeRecords(empRecords, loginEntry, logoutRange);
+                        const int MAXIMUM_LOGOUT_EXTENSION = 60;
+                        start_range = start_date_range;
+                        end_range = logout_schedule.AddHours(1).AddMinutes(MAXIMUM_LOGOUT_EXTENSION);
 
-                        if (Decimal.Remainder(resultQuery.Count(), 2) == 0)
-                        {
-                            return new EmployeeGuardRoomModel()
-                            {
-                                EmployeeRecords = resultQuery.ToList(),
-                                Message = errMsg
-                            };
-                        }
-                    }
-
-                    if (validationResult.Message.Equals("InvalidTimeLog"))
-                    {
-                        /**
-                         * if found invalid time log from the default logout time, look out for the extension
-                         * of logout temporarily upto 1hour extension
-                         */
-                        const int MAXIMUM_LOGOUT_EXTENSION = 60;// set 30 min maximum extension after the schedule
-                        end_date_range = end_date_range.AddMinutes(MAXIMUM_LOGOUT_EXTENSION);
-
-                        resultQuery = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
-
-                        if (Decimal.Remainder(resultQuery.Count(), 2) == 0)
-                        {
-                            resultQuery = NormalizeLoginAndLogout(resultQuery, login_schedule, login_schedule);
-
-                            return new EmployeeGuardRoomModel()
-                            {
-                                EmployeeRecords = resultQuery.ToList(),
-                                Message = errMsg
-                            };
-                        }
+                        EmployeeGuardRoomModel scopeResult = ExtendQueryScope(empRecords, resultQuery, start_range, end_range);
+                        if (scopeResult == null) return validationResult;
+                        else return scopeResult;
                     }
                     return validationResult;
                 }
@@ -367,13 +341,32 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
+                IEnumerable<DataRow> resultQuery = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(resultQuery);
                 if (validationResult != null)
-                    return validationResult;
+                {
+                    DateTime start_range = new DateTime();
+                    DateTime end_range = new DateTime();
 
-                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, logout_schedule);
+                    if (validationResult.Message.Equals("NoReport") || validationResult.Message.Equals("InvalidTimeLog") || validationResult.Message.Equals("NoLogOut"))
+                    { /**
+                         * if no resulting query from default reported schedule try to find any instance of midshift with in that day
+                         */
+                        const int MAXIMUM_LOGOUT_EXTENSION = 60;
+                        start_range = start_date_range;
+                        end_range = logout_schedule.AddHours(1).AddMinutes(MAXIMUM_LOGOUT_EXTENSION);
+
+                        EmployeeGuardRoomModel scopeResult = ExtendQueryScope(empRecords, resultQuery, start_range, end_range);
+                        if (scopeResult == null) return validationResult;
+                        else return scopeResult;
+                    }
+                    return validationResult;
+                }
+
+
+                resultQuery = NormalizeLoginAndLogout(resultQuery, login_schedule, logout_schedule);
+                empRecords = resultQuery;
             }
             else if (reported_schedule.Equals(EmployeeShifts.NIGHT_SHIFT))
             {
@@ -389,13 +382,30 @@ namespace SF.AttendanceManagement.Services
                 DateTime start_date_range = login_schedule.AddHours(LOGIN_MIN_BUFFER * -1);
                 DateTime end_date_range = login_schedule.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
 
-                empRecords = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
+                IEnumerable<DataRow> resultQuery = QueryEmployeeRecords(empRecords, start_date_range, end_date_range);
 
-                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(empRecords);
+                EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(resultQuery);
                 if (validationResult != null)
-                    return validationResult;
+                {
+                    DateTime start_range = new DateTime();
+                    DateTime end_range = new DateTime();
 
-                empRecords = NormalizeLoginAndLogout(empRecords, login_schedule, logout_schedule);
+                    if (validationResult.Message.Equals("InvalidTimeLog") || validationResult.Message.Equals("NoLogOut"))
+                    {
+                        const int MAXIMUM_LOGOUT_EXTENSION = 60;
+                        start_range = start_date_range;
+                        end_range = logout_schedule.AddHours(1)
+                                                   .AddMinutes(MAXIMUM_LOGOUT_EXTENSION);
+
+                        EmployeeGuardRoomModel scopeResult = ExtendQueryScope(empRecords, resultQuery, start_range, end_range);
+                        if (scopeResult == null) return validationResult;
+                        else return scopeResult;
+                    }
+                    return validationResult;
+                }
+
+                resultQuery = NormalizeLoginAndLogout(resultQuery, login_schedule, logout_schedule);
+                empRecords = resultQuery;
             }
             else if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
             {
@@ -403,6 +413,7 @@ namespace SF.AttendanceManagement.Services
                 // schedule2: "16:00:00-04:00:00";
                 string[] schedule1 = "20:00:00-08:00:00".Split('-');
                 string[] schedule2 = "16:00:00-04:00:00".Split('-');
+                const int MAXIMUM_LOGOUT_EXTENSION = 60;
 
                 string str_current_start_schedule1 = string.Format("{0} {1}", current_date.ToString("yyyy-MM-dd"), schedule1[0]);
                 string str_current_end_schedule1 = string.Format("{0} {1}", current_date.AddDays(1).ToString("yyyy-MM-dd"), schedule1[1]);
@@ -411,7 +422,8 @@ namespace SF.AttendanceManagement.Services
                 DateTime logout_schedule1 = DateTime.ParseExact(str_current_end_schedule1, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
 
                 DateTime start_date_range1 = login_schedule1.AddHours(LOGIN_MIN_BUFFER * -1);
-                DateTime end_date_range1 = login_schedule1.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
+                DateTime end_date_range1 = login_schedule1.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER)
+                                                          .AddMinutes(MAXIMUM_LOGOUT_EXTENSION);// to handle a situation where logout extend a couple of minutes
 
                 /*query for first schedule*/
                 IEnumerable<DataRow> firstShiftQuery = QueryEmployeeRecords(empRecords, start_date_range1, end_date_range1);
@@ -423,7 +435,8 @@ namespace SF.AttendanceManagement.Services
                 DateTime logout_schedule2 = DateTime.ParseExact(str_current_end_schedule2, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
 
                 DateTime start_date_range2 = login_schedule2.AddHours(LOGIN_MIN_BUFFER * -1);
-                DateTime end_date_range2 = login_schedule2.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER);
+                DateTime end_date_range2 = login_schedule2.AddHours((double)reported_worked_hours + LOGOUT_MAX_BUFFER)
+                                                          .AddMinutes(MAXIMUM_LOGOUT_EXTENSION);// to handle a situation where logout extend a couple of minutes;
 
                 IEnumerable<DataRow> secondShiftQuery = QueryEmployeeRecords(empRecords, start_date_range2, end_date_range2);
 
@@ -449,11 +462,9 @@ namespace SF.AttendanceManagement.Services
                     DateTime loginEntry = DateTime.ParseExact(loginStamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
                     isSecondSchedule = DateTime.Compare(loginEntry, maxLogin) <= 0;
                 }
-
-
-                if (isSecondSchedule && !isFirstSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) == 0)// to identify the record in guard room, that record should be paired
+                if (isSecondSchedule && !isFirstSchedule && IsResultingQueryValid(secondShiftQuery))
                 {
-                    empRecords = NormalizeLoginAndLogout(secondShiftQuery, login_schedule2, logout_schedule2);
+                    empRecords = NormalizeLoginAndLogout(secondShiftQuery, login_schedule2, logout_schedule2);// to identify the record in guard room, that record should be paired
                     return new EmployeeGuardRoomModel()
                     {
                         EmployeeRecords = empRecords.ToList(),
@@ -461,8 +472,7 @@ namespace SF.AttendanceManagement.Services
                     };
                 }
 
-
-                if (isFirstSchedule && !isSecondSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) == 0)// to identify the record in guard room, that record should be paired
+                if (isFirstSchedule && !isSecondSchedule && IsResultingQueryValid(firstShiftQuery))// to identify the record in guard room, that record should be paired
                 {
                     empRecords = NormalizeLoginAndLogout(firstShiftQuery, login_schedule1, logout_schedule1);
                     return new EmployeeGuardRoomModel()
@@ -480,14 +490,14 @@ namespace SF.AttendanceManagement.Services
                         return validationResult;
                 }
 
-                if (isSecondSchedule && Decimal.Remainder(secondShiftQuery.Count(), 2) != 0)
+                if (isSecondSchedule && IsResultingQueryValid(secondShiftQuery))
                 {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(secondShiftQuery);
                     if (validationResult != null)
                         return validationResult;
                 }
 
-                if (isFirstSchedule && Decimal.Remainder(firstShiftQuery.Count(), 2) != 0)
+                if (isFirstSchedule && IsResultingQueryValid(firstShiftQuery))
                 {
                     EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(firstShiftQuery);
                     if (validationResult != null)
@@ -519,6 +529,31 @@ namespace SF.AttendanceManagement.Services
                 EmployeeRecords = empRecords.ToList(),
                 Message = errMsg
             };
+        }
+
+        private bool IsResultingQueryValid(IEnumerable<DataRow> resultingQuery) =>
+            decimal.Remainder(resultingQuery.Count(), 2) == 0;
+
+        private EmployeeGuardRoomModel ExtendQueryScope(IEnumerable<DataRow> empRecords, IEnumerable<DataRow> filteredQuery, DateTime start_range, DateTime end_range)
+        {
+            EmployeeGuardRoomModel validationResult = ValidateGuardRoomEntries(filteredQuery);
+            string message = string.Empty;
+
+            IEnumerable<DataRow> dataQuery = new List<DataRow>();
+
+            if (validationResult.Message.Equals("NoReport") || validationResult.Message.Equals("InvalidTimeLog") || validationResult.Message.Equals("NoLogOut")) {
+                dataQuery = QueryEmployeeRecords(empRecords, start_range, end_range);
+                if (dataQuery.Count() == 0) return null;
+
+                if (IsResultingQueryValid(dataQuery)) {
+                    return new EmployeeGuardRoomModel()
+                    {
+                        EmployeeRecords = dataQuery.ToList()
+                    };
+                }
+            }
+            validationResult = ValidateGuardRoomEntries(dataQuery);
+            return validationResult;
         }
 
         private IEnumerable<DataRow> QueryEmployeeRecords(IEnumerable<DataRow> empRecords, DateTime start_date_range, DateTime end_date_range)
@@ -578,14 +613,13 @@ namespace SF.AttendanceManagement.Services
                 };
             }
 
-            if (Decimal.Remainder(empRecords.Count(), 2) != 0) // to identify the record in guard room, that record should be paired
+            if (!IsResultingQueryValid(empRecords))// to identify the record in guard room, that record should be paired
             {
                 return new EmployeeGuardRoomModel()
                 {
                     Message = "InvalidTimeLog"
                 };
             }
-
             return null;
         }
 
