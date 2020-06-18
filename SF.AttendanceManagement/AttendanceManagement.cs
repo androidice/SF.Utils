@@ -53,7 +53,7 @@ namespace SF.AttendanceManagement
             foreach (DataColumn column in guardRoomRecords.Columns)
                 result.Columns.Add(new DataColumn(column.ColumnName));
 
-            decimal totalNoOfRecords = guardRoomRecords.Rows.Count;
+            decimal totalNoOfRecords = (guardRoomRecords.Rows.Count - 1);
             decimal transfer = 0;
 
             foreach (DataRow row in guardRoomRecords.Rows)
@@ -183,7 +183,7 @@ namespace SF.AttendanceManagement
 
 
             string errorMsg = string.Empty;
-            decimal totalRecord = departmentRecords.Rows.Count;
+            decimal totalRecord = (departmentRecords.Rows.Count - 1) ;
             decimal transfer = 0;
 
             foreach (DataRow departmentRecord in departmentRecords.Rows)
