@@ -247,8 +247,13 @@ namespace SF.AttendanceManagement.Services
                             Message = message
                         };
                     }
+                    return validateResult;
                 }
-                return validateResult;
+
+                return new EmployeeGuardRoomModel()
+                {
+                    EmployeeRecords = queryResult.ToList()
+                }; 
             }
             else {
                 return new EmployeeGuardRoomModel()
