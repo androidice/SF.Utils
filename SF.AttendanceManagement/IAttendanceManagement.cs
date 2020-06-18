@@ -13,6 +13,8 @@ namespace SF.AttendanceManagement
         AttendanceFinancialReportOutputModel GenerateDepertmentReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "");
         IDepartmentReportGeneratorService GetDepartmentReportGeneratorService();
 
+        DataTable RemoveDoubleTappingInstanceFromGuardRoom(DataTable guardRoomRecords);
+
         string ValidateFinancialReportGenerationInput(AttendanceFinancialReportInputModel inputModel);
 
         IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files);

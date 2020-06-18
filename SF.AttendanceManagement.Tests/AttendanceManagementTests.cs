@@ -150,6 +150,14 @@ namespace SF.AttendanceManagement.Tests
         }
 
         [Fact]
+        public void REMOVE_DUBLE_TAPPING_FROM_GUARD_ROOM()
+        {
+            IAttendanceManagement attendanceManagement = new AttendanceManagement();
+            DataTable guardRoomRecords = attendanceManagement.ConvertGuardRoomRecordsToDataTable(@"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\4月门卫打卡数据.xls");
+            attendanceManagement.RemoveDoubleTappingInstanceFromGuardRoom(guardRoomRecords);
+        }
+
+        [Fact]
         public void GENERATE_OVERTIME_REPORT() {
 
            
@@ -164,9 +172,9 @@ namespace SF.AttendanceManagement.Tests
             {
                 ReportDateString = "2020-04-01",
                 DepartmentFilePaths = new List<string>() {
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process1\2020年控制阀4月考勤.xlsx"
+                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\2020年控制阀4月考勤.xlsx"
                 },
-                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process1\4月门卫打卡数据.xls"
+                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\4月门卫打卡数据.xls"
             });
             Assert.True(true); // update later
         }

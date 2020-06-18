@@ -42,6 +42,88 @@ namespace SF.AttendanceManagement
             return departmentReportGeneratorService;
         }
 
+        public DataTable RemoveDoubleTappingInstanceFromGuardRoom(DataTable guardRoomRecords)
+        {
+            DataTable result = new DataTable(guardRoomRecords.TableName);
+            const int DATE_TIME_INDEX = 9;
+            const int NAME_INDEX = 3;
+            const int DEPARTMENT_INDEX = 0;
+
+
+            foreach (DataColumn column in guardRoomRecords.Columns)
+                result.Columns.Add(new DataColumn(column.ColumnName));
+
+            decimal totalNoOfRecords = guardRoomRecords.Rows.Count;
+            decimal transfer = 0;
+
+            foreach (DataRow row in guardRoomRecords.Rows)
+            {
+                string department = row[DEPARTMENT_INDEX]?.ToString().TrimAllExtraSpace();
+                string name = row[NAME_INDEX]?.ToString().TrimAllExtraSpace();
+                string dateTimeStamp = row[DATE_TIME_INDEX]?.ToString().TrimAllExtraSpace();
+                decimal percentage = (transfer / totalNoOfRecords) * 100;
+
+
+                logger.LogInformation(string.Format("Clearing guard room records by removing double tapping instance [{0} - {1}] ({2}%)",transfer, totalNoOfRecords, percentage.ToString("0#")));
+
+                bool isValid = !string.IsNullOrEmpty(department) &&
+                               !string.IsNullOrEmpty(name) &&
+                               !string.IsNullOrEmpty(dateTimeStamp);
+
+                if (isValid)
+                {
+                    DataRow query = result.AsEnumerable()
+                                          .LastOrDefault(crow => (!string.IsNullOrEmpty(crow[DEPARTMENT_INDEX]?.ToString()) && crow[DEPARTMENT_INDEX].ToString().Equals(department)) &&
+                                                                 (!string.IsNullOrEmpty(crow[NAME_INDEX]?.ToString()) && crow[NAME_INDEX].ToString().Equals(name))
+                                                                );
+
+                    if (query == null)
+                    {
+                        DataRow newRow = result.NewRow();
+                        newRow.ItemArray = row.ItemArray;
+                        result.Rows.Add(newRow);
+                    }
+
+                    if (query != null)
+                    {
+                        string last_time_stamp = query[DATE_TIME_INDEX]?.ToString();
+                        DataRow queryRow = FilterDuplicateTimeStamp(row, last_time_stamp);
+                        if (queryRow == null)
+                        {
+                            DataRow newRow = result.NewRow();
+                            newRow.ItemArray = row.ItemArray;
+                            result.Rows.Add(newRow);
+                        }
+                        else {
+                            query.ItemArray = queryRow.ItemArray;
+                        }
+                    }
+                }
+
+                transfer++;
+            }
+            return result;
+        }
+
+        private DataRow FilterDuplicateTimeStamp(DataRow currentRecord, string last_time_stamp)
+        {
+            const string DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+            const int DOUBLE_TAPPING_MAX_MINUTES = 15;//teporarily set to maximum of 15mins for the double tapping
+            const int DATE_TIME_INDEX = 9;
+            string current_time_stamp = currentRecord[DATE_TIME_INDEX].ToString();
+
+            DateTime d1 = DateTime.ParseExact(last_time_stamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+            DateTime d2 = DateTime.ParseExact(current_time_stamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
+            TimeSpan diff = d2.Subtract(d1);
+
+            if (diff.Minutes <= DOUBLE_TAPPING_MAX_MINUTES && diff.Hours == 0) {
+                currentRecord[DATE_TIME_INDEX] = current_time_stamp;
+                return currentRecord;
+            }  
+
+            return null;
+        }
+
         public AttendanceFinancialReportOutputModel GenerateDepertmentReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "")
         {
 
@@ -61,6 +143,7 @@ namespace SF.AttendanceManagement
 
                 IEnumerable<DataTable> departmentRecords = this.ConvertDepartmentRecordsToDataTable(inputModel.DepartmentFilePaths);
                 DataTable guardRoomRecords = this.ConvertGuardRoomRecordsToDataTable(inputModel.GuardRoomFilePath);
+                guardRoomRecords = RemoveDoubleTappingInstanceFromGuardRoom(guardRoomRecords);
                 DataTable settlementRecords = this.ConvertSettlementRecordsToDataTable(inputModel.SettlementFilePath);
 
                 foreach (DataTable departmentRecord in departmentRecords)
@@ -100,14 +183,13 @@ namespace SF.AttendanceManagement
 
 
             string errorMsg = string.Empty;
-            int totalRecord = departmentRecords.Rows.Count;
-            int totalTransfer = 0;
-            int transferPercentage = 0;
+            decimal totalRecord = departmentRecords.Rows.Count;
+            decimal transfer = 0;
 
             foreach (DataRow departmentRecord in departmentRecords.Rows)
             {
                 int date_index = 2;
-                transferPercentage = (totalTransfer / totalRecord) * 100;
+                decimal percentage = (transfer / totalRecord) * 100;
 
                 string employeeName = string.Empty;
                 string departmentName = string.Empty;
@@ -126,7 +208,7 @@ namespace SF.AttendanceManagement
                 int rowIndex = departmentRecords.Rows.IndexOf(departmentRecord);
                 bool isHeaderIndex = departmentReportGeneratorService.IsDepartmetTemplateHeader(rowIndex);
 
-                logger.LogInformation("Processing {0} ({1} out of {2}) - {3}%", departmentRecords.TableName, totalTransfer, totalRecord, transferPercentage);
+                logger.LogInformation("Processing {0} ({1} out of {2}) - {3}%", departmentRecords.TableName, transfer, totalRecord, percentage.ToString("0#"));
 
                 if (!isHeaderIndex)
                 {
@@ -135,7 +217,7 @@ namespace SF.AttendanceManagement
                     {
                         for (DateTime current_date = startDate; DateTime.Compare(current_date, endDate) <= 0; current_date = current_date.AddDays(1))
                         {
-                            logger.LogInformation(string.Format("Generating report for {0} on {1}", employeeName, current_date));
+                            logger.LogInformation(string.Format("Generating report for {0} on {1}", employeeName, current_date.ToString("yyyy-MM-dd")));
                             const int DATE_TIME_INDEX = 9;
                             const int DEPARTMENT_INDEX = 0;
                             string reported_attendance = departmentRecord[date_index]?.ToString();
@@ -160,7 +242,7 @@ namespace SF.AttendanceManagement
                                             {
                                                 if (!departmentReportGeneratorService.IsHoliday(current_date))
                                                     weekDayOvertime = weekDayOvertime + (worked_hours - STANDARD_WORKING_HOURS);
-                                                else 
+                                                else
                                                     weekDayOvertime = weekDayOvertime + worked_hours;
                                             } // for weekday overtime
                                             else if (current_date.IsWeekEnd()) //  for weekend overtime
@@ -207,7 +289,7 @@ namespace SF.AttendanceManagement
                                             case "InvalidTimeLog":
                                                 //TODO: Employee guard room records contains not pairing login and logout, for multiple entries
                                                 logger.LogError(string.Format("Employee {0} reported {1} but shows invalid time logs on {2}", employeeName, reported_schedule, current_date.ToString("yyyy-MM-dd")));
-                                                break;   
+                                                break;
                                         }
                                         bool isMedicalLeave = reported_schedule.Equals(EmployeeOff.MEDICAL_LEAVE);
                                         bool isNoPayLeave = reported_schedule.Equals(EmployeeOff.NO_PAY_LEAVE);
@@ -261,7 +343,7 @@ namespace SF.AttendanceManagement
                     }
                 }
 
-                totalTransfer++;
+                transfer++;
             }
 
             return overtimeReport;

@@ -160,6 +160,8 @@ namespace SF.AttendanceManagement.Services
             }
             else if (reported_schedule.Equals(EmployeeShifts.HALF_MID_SHIFT_HALF_NIGHT_SHIFT))
             {
+                if (string.IsNullOrEmpty(nonSymbol)) return 12;// default for half mid and half night full sched
+
                 decimal worked_hours = decimal.Parse(nonSymbol);
                 if (!current_date.IsWeekEnd() && !IsHoliday(current_date)) return STANDARD_WORKING_HOURS + worked_hours; // this is  for the week day and not holiday
 
