@@ -41,7 +41,7 @@ namespace SF.AttendanceManagement.Tests
         {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             string fileLocation = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\4月.xlsx";
-            bool isValid = attendanceManagement.IsSettlementFileValid(fileLocation);  
+            bool isValid = attendanceManagement.IsSettlementFileValid(fileLocation);
             Assert.True(isValid);
         }
 
@@ -65,9 +65,10 @@ namespace SF.AttendanceManagement.Tests
         {
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             string errorMsg = attendanceManagement.ValidateFinancialReportGenerationInput(
-                new AttendanceFinancialReportInputModel() {
+                new AttendanceFinancialReportInputModel()
+                {
                     ReportDateString = "2019-04-01",
-                    DepartmentFilePaths= new List<string>()
+                    DepartmentFilePaths = new List<string>()
                     {
                         @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\2020年控制阀4月考勤.xlsx"
                     }
@@ -92,7 +93,7 @@ namespace SF.AttendanceManagement.Tests
             );
             Assert.True(!string.IsNullOrEmpty(errorMsg));
         }
-        
+
         [Fact]
         public void SHOULD_RETURN_EMPTY_IF_GUARDROOMFILE_IS_VALID()
         {
@@ -158,9 +159,10 @@ namespace SF.AttendanceManagement.Tests
         }
 
         [Fact]
-        public void GENERATE_OVERTIME_REPORT() {
+        public void GENERATE_OVERTIME_REPORT()
+        {
 
-           
+
             IAttendanceManagement attendanceManagement = new AttendanceManagement();
             //example of how we set holidays
             attendanceManagement.GetDepartmentReportGeneratorService().SetDepartmentHolidays(new List<DateTime>()
@@ -177,6 +179,51 @@ namespace SF.AttendanceManagement.Tests
                 GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\4月门卫打卡数据.xls"
             });
             Assert.True(true); // update later
+        }
+
+        [Fact]
+        public void SHOULD_ADDJUST_OVERTIME_FROM_OFFINLIUE()
+        {
+            IAttendanceManagement attendanceManagement = new AttendanceManagement();
+            decimal weekdayot = 5;
+            decimal weekendot = 10;
+            decimal offinliue = 0;
+
+            decimal[] adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 5, 10, 0 }, adjustments);
+
+            weekdayot = 5;
+            weekendot = 10;
+            offinliue = 5;
+
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 5, 5, 0 }, adjustments);
+
+            weekdayot = 5;
+            weekendot = 10;
+            offinliue = 10;
+
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 5, 0, 0 }, adjustments);
+
+            weekdayot = 5;
+            weekendot = 10;
+            offinliue = 12;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 3, 0, 0 }, adjustments);
+
+            weekdayot = 5;
+            weekendot = 10;
+            offinliue = 15;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 0, 0, 0 }, adjustments);
+
+            weekdayot = 5;
+            weekendot = 10;
+            offinliue = 17;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 0, 0, 2 }, adjustments);
+
         }
     }
 }

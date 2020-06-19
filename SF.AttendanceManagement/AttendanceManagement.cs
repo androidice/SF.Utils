@@ -64,7 +64,7 @@ namespace SF.AttendanceManagement
                 decimal percentage = (transfer / totalNoOfRecords) * 100;
 
 
-                logger.LogInformation(string.Format("Clearing guard room records by removing double tapping instance [{0} - {1}] ({2}%)",transfer, totalNoOfRecords, percentage.ToString("0#")));
+                logger.LogInformation(string.Format("Clearing guard room records by removing double tapping instance [{0} - {1}] ({2}%)", transfer, totalNoOfRecords, percentage.ToString("0#")));
 
                 bool isValid = !string.IsNullOrEmpty(department) &&
                                !string.IsNullOrEmpty(name) &&
@@ -94,7 +94,8 @@ namespace SF.AttendanceManagement
                             newRow.ItemArray = row.ItemArray;
                             result.Rows.Add(newRow);
                         }
-                        else {
+                        else
+                        {
                             query.ItemArray = queryRow.ItemArray;
                         }
                     }
@@ -116,10 +117,11 @@ namespace SF.AttendanceManagement
             DateTime d2 = DateTime.ParseExact(current_time_stamp, DATE_TIME_FORMAT, CultureInfo.CurrentCulture);
             TimeSpan diff = d2.Subtract(d1);
 
-            if (diff.Minutes <= DOUBLE_TAPPING_MAX_MINUTES && diff.Hours == 0) {
+            if (diff.Minutes <= DOUBLE_TAPPING_MAX_MINUTES && diff.Hours == 0)
+            {
                 currentRecord[DATE_TIME_INDEX] = current_time_stamp;
                 return currentRecord;
-            }  
+            }
 
             return null;
         }
@@ -183,7 +185,7 @@ namespace SF.AttendanceManagement
 
 
             string errorMsg = string.Empty;
-            decimal totalRecord = (departmentRecords.Rows.Count - 1) ;
+            decimal totalRecord = (departmentRecords.Rows.Count - 1);
             decimal transfer = 0;
 
             foreach (DataRow departmentRecord in departmentRecords.Rows)
@@ -339,6 +341,18 @@ namespace SF.AttendanceManagement
                         tempRow["changeHour"] = changeHour;
                         overtimeReport.Rows.Add(tempRow);
 
+                        /*apply adjustments from off in lieu*/
+                        decimal[] adjustments = ApplyOvertimeAdjustments(weekDayOvertime, weekEndOvertime, offInLiue);
+                        tempRow["weekDayOverTime"] = adjustments[0];// adjust the weekday overtime
+                        tempRow["weekEndOverTime"] = adjustments[1];// adjust the weekend overtime 
+                        tempRow["changeHour"] = adjustments[2];// record change hour
+                        /**
+                         * TODO: 
+                         * 1. Draft the first result to an excell file
+                         * 2. Draft the 2nd result with adjustments from the off in liue to an excell file
+                         */
+
+
                         serialNo++;
                     }
                 }
@@ -347,6 +361,47 @@ namespace SF.AttendanceManagement
             }
 
             return overtimeReport;
+        }
+
+        public decimal[] ApplyOvertimeAdjustments(decimal week_day_overtime, decimal week_end_overtime, decimal off_in_liue)
+        {
+            decimal[] adjustments = new decimal[] { 0, 0, 0 };// weekday, weekend, changehour
+            decimal diff = 0;
+            decimal totalOvertime = (week_day_overtime + week_end_overtime);
+            adjustments[0] = week_day_overtime;
+            adjustments[1] = week_end_overtime;
+            adjustments[2] = off_in_liue;
+
+            bool isVaid = off_in_liue > 0;
+            if (!isVaid) return adjustments;
+
+            diff = (week_end_overtime - off_in_liue);
+            if (diff >= 0)
+            {
+                week_end_overtime = diff;
+                diff = diff == 0 ? off_in_liue : diff;
+                off_in_liue = off_in_liue - diff;
+            }
+            else {
+                diff = off_in_liue - week_end_overtime;
+                week_end_overtime = 0;
+                if(diff >= 0)
+                {
+                    week_day_overtime = week_day_overtime - diff;
+                    if (week_day_overtime >= 0)
+                        off_in_liue = 0;
+                    else
+                    {
+                        week_day_overtime = 0;
+                        off_in_liue = (off_in_liue - totalOvertime);
+                    }
+                }
+            }
+
+            adjustments[0] = week_day_overtime;
+            adjustments[1] = week_end_overtime;
+            adjustments[2] = off_in_liue; //record change hour if greater than 0
+            return adjustments;
         }
 
         private decimal GetMidShiftCount(ICollection<DataRow> employee_records, DateTime current_date)
@@ -381,38 +436,6 @@ namespace SF.AttendanceManagement
             count = 1 / count;
             return count;
         }
-
-        public void PrepareSettlementmentReport()
-        {
-            //TODO: prepare settlement report for weekday ot and overtime 
-            throw new NotImplementedException();
-        }
-
-        public void PrepareOvertimeReportWithSettlement()
-        {
-            //TODO: prepare overtime report with the settlement
-            throw new NotImplementedException();
-        }
-
-        public void PrerpareFinancialReport()
-        {
-            //TODO: process financial report
-            throw new NotImplementedException();
-        }
-
-        public void PrepareSettlementReport()
-        {
-            //TODO: prepare overtime report with the settlement
-            throw new NotImplementedException();
-        }
-
-        public void PrepareErrorLogReport()
-        {
-            //TODO: create a log report for errors like unsupported symbol
-            throw new NotImplementedException();
-        }
-
-
 
         public IEnumerable<DataTable> ConvertDepartmentRecordsToDataTable(ICollection<string> files)
         {

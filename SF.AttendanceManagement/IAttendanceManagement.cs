@@ -14,6 +14,7 @@ namespace SF.AttendanceManagement
         IDepartmentReportGeneratorService GetDepartmentReportGeneratorService();
 
         DataTable RemoveDoubleTappingInstanceFromGuardRoom(DataTable guardRoomRecords);
+        decimal[] ApplyOvertimeAdjustments(decimal week_day_overtime, decimal week_end_overtime, decimal off_in_liue);
 
         string ValidateFinancialReportGenerationInput(AttendanceFinancialReportInputModel inputModel);
 
