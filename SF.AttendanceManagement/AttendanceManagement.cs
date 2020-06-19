@@ -286,6 +286,7 @@ namespace SF.AttendanceManagement
                                                 //TODO: Login has no matching logout
                                                 const int DATE_INDEX = 9;
                                                 DataRow reported = employee_login_records.EmployeeRecords.FirstOrDefault();
+                                                offInLiue = offInLiue + STANDARD_WORKING_HOURS;
                                                 logger.LogError(string.Format("Employee {0} reported {1} login but shows no logout on {2}", employeeName, reported[DATE_INDEX], current_date.ToString("yyyy-MM-dd")));
                                                 break;
                                             case "InvalidTimeLog":
