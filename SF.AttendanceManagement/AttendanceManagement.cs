@@ -380,8 +380,8 @@ namespace SF.AttendanceManagement
             if (diff >= 0)
             {
                 week_end_overtime = diff;
-                diff = diff == 0 ? off_in_liue : diff;
-                off_in_liue = off_in_liue - diff;
+                if (diff >= 0)
+                    off_in_liue = 0;
             }
             else {
                 diff = off_in_liue - week_end_overtime;

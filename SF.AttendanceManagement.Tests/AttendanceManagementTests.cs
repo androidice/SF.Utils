@@ -224,6 +224,36 @@ namespace SF.AttendanceManagement.Tests
             adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
             Assert.Equal(new decimal[] { 0, 0, 2 }, adjustments);
 
+            weekdayot = 41;
+            weekendot = 28;
+            offinliue = 16;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 41, 12, 0 }, adjustments);
+
+            weekdayot = 41;
+            weekendot = 28;
+            offinliue = 28;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 41, 0, 0 }, adjustments);
+
+            weekdayot = 41;
+            weekendot = 28;
+            offinliue = 30;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 39, 0, 0 }, adjustments);
+
+            weekdayot = 41;
+            weekendot = 28;
+            offinliue = 69;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 0, 0, 0 }, adjustments);
+
+            weekdayot = 41;
+            weekendot = 28;
+            offinliue = 80;
+            adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
+            Assert.Equal(new decimal[] { 0, 0, 11}, adjustments);
+
         }
     }
 }
