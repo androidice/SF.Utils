@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using SF.Utils.Extensions;
 using SF.AttendanceManagement.Models.General;
 using System.Globalization;
+using Microsoft.Extensions.Logging;
+using SF.Utils.Services.Logger;
 
 namespace SF.AttendanceManagement.Services
 {
@@ -28,6 +30,19 @@ namespace SF.AttendanceManagement.Services
         private readonly ICollection<DateTime> departmentHolidays = new List<DateTime>();
         private ICollection<int> departmentTemplateHeaderIndexes = new List<int>();
 
+        private readonly ILoggerService loggerService;
+        private readonly ILogger logger;
+
+        public DepartmentReportGeneratorService()
+        {
+            this.loggerService = new LoggerService();
+            this.logger = loggerService.CreateLogger(GetType().FullName);
+        }
+
+        public DepartmentReportGeneratorService(ILogger logger)
+        {
+            this.logger = logger;
+        }
 
         public int CalculateOvertimework(ICollection<string> timestamps)
         {

@@ -174,9 +174,9 @@ namespace SF.AttendanceManagement.Tests
             {
                 ReportDateString = "2020-04-01",
                 DepartmentFilePaths = new List<string>() {
-                    @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\2020年控制阀4月考勤.xlsx"
+                    @"C:\Users\kevin\Desktop\attendance log\20200604\to process - Copy\2020年控制阀4月考勤.xlsx"
                 },
-                GuardRoomFilePath = @"C:\Users\kevin\Desktop\Innexus\smartfactory.test\SF.Utils.Tests\files\attendance generation files\to process\4月门卫打卡数据.xls"
+                GuardRoomFilePath = @"C:\Users\kevin\Desktop\attendance log\20200604\to process - Copy\4月门卫打卡数据.xls"
             });
             Assert.True(true); // update later
         }
@@ -254,6 +254,76 @@ namespace SF.AttendanceManagement.Tests
             adjustments = attendanceManagement.ApplyOvertimeAdjustments(weekdayot, weekendot, offinliue);
             Assert.Equal(new decimal[] { 0, 0, 11}, adjustments);
 
+        }
+
+        [Fact]
+        public void SHOULD_CREATE_FINANCIAL_REPORT_FILES() {
+
+            IList<DataTable> tables = new List<DataTable>();
+            DataTable overtimeReport = new DataTable("overtimeReport");
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("serialNo"),
+                new DataColumn("empName"),
+                new DataColumn("department"),
+                new DataColumn("weekDayOverTime"),
+                new DataColumn("weekEndOverTime"),
+                new DataColumn("nightShiftCount"),
+                new DataColumn("midShiftCount"),
+                new DataColumn("medicalLeave"),
+                new DataColumn("noPayLeave"),
+                new DataColumn("annualLeave"),
+                new DataColumn("offInLiue"),
+                new DataColumn("changeHour")
+            });
+
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("workedHoursByLaw"),
+                new DataColumn("weekdayExceedOt"),
+                new DataColumn("weekEndExeedOt"),
+                new DataColumn("nightShiftPay"),
+                new DataColumn("nightShiftMealAllowance"),
+                new DataColumn("midShiftPay"),
+                new DataColumn("miscAllowance")
+            });
+
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("awayForOfficialBusiness"),
+                new DataColumn("workInjuryLeave"),
+                new DataColumn("remarks")
+            });
+
+            DataRow tempRow = overtimeReport.NewRow();
+
+            tempRow["serialNo"] = 1.ToString();
+            tempRow["empName"] = "Kevin".ToString();
+            tempRow["department"] = "Department 1".ToString();
+            tempRow["weekDayOverTime"] = 1.ToString();
+            tempRow["weekEndOverTime"] = 1.ToString();
+            tempRow["nightShiftCount"] = 1.ToString();
+            tempRow["midShiftCount"] = 1.ToString();
+            tempRow["medicalLeave"] = 1.ToString();
+            tempRow["noPayLeave"] = 1.ToString();
+            tempRow["annualLeave"] = 1.ToString();
+            tempRow["offInLiue"] = 1.ToString();
+            tempRow["changeHour"] = 1.ToString();
+            tempRow["workedHoursByLaw"] = 1.ToString();
+            tempRow["weekdayExceedOt"] = 1.ToString();
+            tempRow["weekEndExeedOt"] = 1.ToString();
+            tempRow["nightShiftPay"] = 1.ToString();
+            tempRow["nightShiftMealAllowance"] = 1.ToString();
+            tempRow["midShiftPay"] = 1.ToString();
+            tempRow["miscAllowance"] = 1.ToString();
+            tempRow["awayForOfficialBusiness"] = 1.ToString();
+            tempRow["workInjuryLeave"] = 1.ToString();
+            tempRow["remarks"] = 1.ToString();
+
+            overtimeReport.Rows.Add(tempRow);
+
+            tables.Add(overtimeReport);
+
+
+            IAttendanceManagement attendanceManagement = new AttendanceManagement();
+            attendanceManagement.CreateFinancialReportFiles(tables, string.Empty);
         }
     }
 }

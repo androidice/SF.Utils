@@ -10,6 +10,12 @@ namespace SF.AttendanceManagement
 {
     public interface IAttendanceManagement
     {
+        string ConfiguraLoggingPath(string path, string fileName = "");
+        IEnumerable<string> CreateFinancialReportFiles(IEnumerable<DataTable> overtimeReports, string location);
+
+        string UploadPath { get; set; }
+        string ResultPath { get; set; }
+
         AttendanceFinancialReportOutputModel GenerateDepertmentReport(AttendanceFinancialReportInputModel inputModel, string destinationPath = "");
         IDepartmentReportGeneratorService GetDepartmentReportGeneratorService();
 

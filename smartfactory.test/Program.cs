@@ -27,7 +27,7 @@ namespace smartfactory.test
             var loggerFactory = new LoggerFactory(new[] { new ConsoleLoggerProvider(optionsMonitor) }, new LoggerFilterOptions { MinLevel = LogLevel.Trace });
             //loggerFactory.AddProvider(new DebugLoggerProvider());
 
-            ILogger logger = loggerFactory.CreateLogger<Program>();
+            ILogger logger = loggerFactory.CreateLogger("category");
 
             logger.LogInformation("Logging information.");
             logger.LogCritical("Logging critical information.");

@@ -15,24 +15,62 @@ using SF.AttendanceManagement.Models.General;
 using Microsoft.Extensions.Logging;
 using SF.Utils.Services;
 using SF.Utils.Services.Logger;
+using SF.Utils.Services.DataTableServices;
+using Microsoft.Extensions.Configuration;
+using System.Configuration;
+using NPOI.SS.UserModel;
+using NPOI.HSSF.Util;
 
 namespace SF.AttendanceManagement
 {
+
     public class AttendanceManagement : IAttendanceManagement
     {
-        private readonly IWorkBookConverter workbookConverter = new WorkBookConverter();
-        private readonly IDepartmentReportGeneratorService departmentReportGeneratorService = new DepartmentReportGeneratorService();
-        private readonly ILogger<AttendanceManagement> logger;
+        private readonly IWorkBookConverter workbookConverter;
+        private readonly IDataTableConverter dataTableConverter;
+        private readonly IDepartmentReportGeneratorService departmentReportGeneratorService;
 
-        public AttendanceManagement()
+        private readonly ILoggerService loggerService;
+        private readonly ILogger logger;
+        
+
+        /// <summary>
+        /// Set upload path for the files to be uploaded to the server
+        /// </summary>
+        public string UploadPath { get; set; }
+
+
+        /// <summary>
+        /// Set the result path for the result files to be saved on the server
+        /// </summary>
+        public string ResultPath { get; set; }
+
+        public AttendanceManagement(IConfiguration config = null)
         {
-            ILoggerService loggerService = new LoggerService();
-            logger = loggerService.CreateLogger<AttendanceManagement>();
+            this.loggerService = new LoggerService();
+            this.logger = loggerService.CreateLogger(GetType().FullName);
+            
+            workbookConverter = new WorkBookConverter(this.logger);
+            dataTableConverter = new DataTableConverter(this.logger);
+            departmentReportGeneratorService = new DepartmentReportGeneratorService(this.logger);
         }
 
-        public AttendanceManagement(ILogger<AttendanceManagement> logger)
+
+        ///// <summary>
+        ///// Set the path and filename for logger
+        ///// if path is empty it will use the current date format yyyyMMddHHmmss
+        ///// for filename
+        ///// </summary>
+        ///// <param name="path"></param>
+        ///// <param name="filename"></param>
+        ///// <returns></returns>
+        public string ConfiguraLoggingPath(string path, string fileName = "")
         {
-            this.logger = logger;
+            if (string.IsNullOrEmpty(path)) throw new ArgumentException("Please provide location where to save the logging");
+            fileName = string.IsNullOrEmpty(fileName) ? DateTime.Now.ToString("yyyyMMddHHmmss") : fileName;
+            path = Path.Combine(path, fileName);
+            ILoggerFactory loggerFacotry = loggerService.LoggerFactory.AddFile(path);
+            return path;
         }
 
         private readonly int STANDARD_WORKING_HOURS = 8;
@@ -53,15 +91,16 @@ namespace SF.AttendanceManagement
             foreach (DataColumn column in guardRoomRecords.Columns)
                 result.Columns.Add(new DataColumn(column.ColumnName));
 
-            decimal totalNoOfRecords = (guardRoomRecords.Rows.Count - 1);
+            decimal totalNoOfRecords = guardRoomRecords.Rows.Count;
             decimal transfer = 0;
+            decimal percentage = 0;
 
             foreach (DataRow row in guardRoomRecords.Rows)
             {
                 string department = row[DEPARTMENT_INDEX]?.ToString().TrimAllExtraSpace();
                 string name = row[NAME_INDEX]?.ToString().TrimAllExtraSpace();
                 string dateTimeStamp = row[DATE_TIME_INDEX]?.ToString().TrimAllExtraSpace();
-                decimal percentage = (transfer / totalNoOfRecords) * 100;
+                percentage = (transfer / totalNoOfRecords) * 100;
 
 
                 logger.LogInformation(string.Format("Clearing guard room records by removing double tapping instance [{0} - {1}] ({2}%)", transfer, totalNoOfRecords, percentage.ToString("0#")));
@@ -100,9 +139,9 @@ namespace SF.AttendanceManagement
                         }
                     }
                 }
-
                 transfer++;
             }
+            logger.LogInformation(string.Format("Clearing guard room records by removing double tapping instance [{0} - {1}] ({2}%)", transfer, totalNoOfRecords, percentage.ToString("0#")));
             return result;
         }
 
@@ -132,6 +171,7 @@ namespace SF.AttendanceManagement
             bool isValid = true;
             string errorMsg = string.Empty;
             string outputPath = string.Empty;
+            ICollection<DataTable> results = new List<DataTable>();
 
             errorMsg = ValidateFinancialReportGenerationInput(inputModel);
             isValid = errorMsg.Equals(string.Empty);
@@ -148,18 +188,274 @@ namespace SF.AttendanceManagement
                 guardRoomRecords = RemoveDoubleTappingInstanceFromGuardRoom(guardRoomRecords);
                 DataTable settlementRecords = this.ConvertSettlementRecordsToDataTable(inputModel.SettlementFilePath);
 
+                this.logger.LogInformation("Preparing overtime report, please wait");
                 foreach (DataTable departmentRecord in departmentRecords)
                 {
-                    this.PrepareOvertimeReport(startDate, endDate, guardRoomRecords, departmentRecord);
+                    this.logger.LogInformation("Preparing overtime report for {0}, please wait", departmentRecord.TableName);
+                    DataTable overtimeReport = this.PrepareOvertimeReport(startDate, endDate, guardRoomRecords, departmentRecord);
+                    results.Add(overtimeReport);
+                    this.logger.LogInformation("Preparing overtime report for {0} has been completed", departmentRecord.TableName);
                 }
-
+                this.logger.LogInformation("Preparing overtime report has been completed");
             }
             return new AttendanceFinancialReportOutputModel()
             {
                 Success = isValid,
                 ErrorMsg = errorMsg,
-                DestinationPaths = new List<string>()
+                ResultingTables = results
             };
+        }
+
+
+
+        public IEnumerable<string> CreateFinancialReportFiles(IEnumerable<DataTable> overtimeReports, string location)
+        {
+            ICollection<string> locations = new List<string>();
+            //DataTable overtimeReport = new DataTable(departmentRecords.TableName);
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("serialNo"),
+            //    new DataColumn("empName"),
+            //    new DataColumn("department"),
+            //    new DataColumn("weekDayOverTime"),
+            //    new DataColumn("weekEndOverTime"),
+            //    new DataColumn("nightShiftCount"),
+            //    new DataColumn("midShiftCount"),
+            //    new DataColumn("medicalLeave"),
+            //    new DataColumn("noPayLeave"),
+            //    new DataColumn("annualLeave"),
+            //    new DataColumn("offInLiue"),
+            //    new DataColumn("changeHour")
+            //});
+
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("workedHoursByLaw"),
+            //    new DataColumn("weekdayExceedOt"),
+            //    new DataColumn("weekEndExeedOt"),
+            //    new DataColumn("nightShiftPay"),
+            //    new DataColumn("nightShiftMealAllowance"),
+            //    new DataColumn("midShiftPay"),
+            //    new DataColumn("miscAllowance")
+            //});
+
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("awayForOfficialBusiness"),
+            //    new DataColumn("workInjuryLeave"),
+            //    new DataColumn("remarks")
+            //});
+
+            dataTableConverter.InitializeWorkBook();
+            /**Todo: add code for converting datatable to a financial report excell file*/
+
+            this.logger.LogInformation("Preparing output templates");
+
+            ICollection<DataTable> templates = new List<DataTable>();
+
+            decimal totalRows = overtimeReports.Count();
+            decimal transfer = 0;
+            decimal percentage = 0;
+
+            foreach (DataTable table in overtimeReports)
+            {
+                transfer = 0;
+
+                DataTable template = new DataTable(table.TableName);
+                template.Columns.AddRange(new DataColumn[] {
+                    new DataColumn("serialNo"),
+                    new DataColumn("empName"),
+                    new DataColumn("department"),
+                    new DataColumn("annualLeave"),
+                    new DataColumn("medicalLeave"),
+                    new DataColumn("noPayLeave"),
+                    new DataColumn("offInLiue"),
+                    new DataColumn("awayForOfficialBusiness"),
+                    new DataColumn("workInjuryLeave"),
+                    new DataColumn("midShiftCount"),
+                    new DataColumn("midShiftPay"),
+                    new DataColumn("nightShiftCount"),
+                    new DataColumn("nightShiftPay"),
+                    new DataColumn("nightShiftMealAllowance"),
+                    new DataColumn("miscAllowance"),
+                    new DataColumn("weekDayOverTime"),
+                    new DataColumn("weekEndOverTime"),
+                    new DataColumn("weekdayExceedOt"),
+                    new DataColumn("weekEndExeedOt"),
+                    new DataColumn("workedHoursByLaw"),
+                    new DataColumn("remarks"),
+                });
+
+                foreach (DataRow row in table.Rows)
+                {
+                    percentage = (transfer / totalRows) * 100;
+                    logger.LogInformation(string.Format("Preparing template [{0} - {1}] ({2}%)", transfer, totalRows, percentage));
+
+                    DataRow tempRow = template.NewRow();
+                    tempRow["serialNo"] = row["serialNo"];
+                    tempRow["empName"] = row["empName"];
+                    tempRow["department"] = row["department"];
+                    tempRow["annualLeave"] = row["annualLeave"];
+                    tempRow["medicalLeave"] = row["medicalLeave"];
+                    tempRow["noPayLeave"] = row["noPayLeave"];
+                    tempRow["offInLiue"] = row["offInLiue"];
+                    tempRow["awayForOfficialBusiness"] = row["awayForOfficialBusiness"];
+                    tempRow["workInjuryLeave"] = row["workInjuryLeave"];
+                    tempRow["midShiftCount"] = row["midShiftCount"];
+                    tempRow["midShiftPay"] = row["midShiftPay"];
+                    tempRow["nightShiftCount"] = row["nightShiftCount"];
+                    tempRow["nightShiftPay"] = row["nightShiftPay"];
+                    tempRow["nightShiftMealAllowance"] = row["nightShiftMealAllowance"];
+                    tempRow["miscAllowance"] = row["miscAllowance"];
+                    tempRow["weekDayOverTime"] = row["weekDayOverTime"];
+                    tempRow["weekEndOverTime"] = row["weekEndOverTime"];
+                    tempRow["weekdayExceedOt"] = row["weekdayExceedOt"];
+                    tempRow["weekEndExeedOt"] = row["weekEndExeedOt"];
+                    tempRow["workedHoursByLaw"] = row["workedHoursByLaw"];
+                    tempRow["remarks"] = row["remarks"];
+                    template.Rows.Add(tempRow);
+                    transfer++;
+                }
+                percentage = (transfer / totalRows) * 100;
+                logger.LogInformation(string.Format("Preparing template [{0} - {1}] ({2}%)", transfer, totalRows, percentage));
+                templates.Add(template);
+            }
+
+
+            this.logger.LogInformation("Writring output files");
+
+
+            foreach (DataTable table in templates)
+            {
+                string filelocation = dataTableConverter.ConvertDataTableToExcell(table,
+                                                                                  location,
+                                                                                  table.TableName,
+                                                                                  ApplyFinancialReportStyle,
+                                                                                  ApplyFinancialReportStyle,
+                                                                                  ApplyFinancialHeaderPorxy,
+                                                                                  ApplyFinancialReportRowValueProxy);
+                locations.Add(filelocation);
+            }
+            this.logger.LogInformation("Writring output files completed");
+
+            return locations;
+        }
+
+
+        public string ApplyFinancialHeaderPorxy(string current_value, string columnName)
+        {
+            //DataTable template = new DataTable(table.TableName);
+            //template.Columns.AddRange(new DataColumn[] {
+            //        new DataColumn("serialNo"),
+            //        new DataColumn("empName"),
+            //        new DataColumn("department"),
+            //        new DataColumn("annualLeave"),
+            //        new DataColumn("medicalLeave"),
+            //        new DataColumn("noPayLeave"),
+            //        new DataColumn("offInLiue"),
+            //        new DataColumn("awayForOfficialBusiness"),
+            //        new DataColumn("workInjuryLeave"),
+            //        new DataColumn("midShiftCount"),
+            //        new DataColumn("midShiftPay"),
+            //        new DataColumn("nightShiftCount"),
+            //        new DataColumn("nightShiftPay"),
+            //        new DataColumn("nightShiftMealAllowance"),
+            //        new DataColumn("miscAllowance"),
+            //        new DataColumn("weekDayOverTime"),
+            //        new DataColumn("weekEndOverTime"),
+            //        new DataColumn("weekdayExceedOt"),
+            //        new DataColumn("weekEndExeedOt"),
+            //        new DataColumn("workedHoursByLaw"),
+            //        new DataColumn("remarks"),
+            //    });
+
+            Dictionary<string, string> columns = new Dictionary<string, string>() {
+                {"serialNo","序号" },
+                {"empName","姓名" },
+                {"department","部门" },
+                {"annualLeave","公休 " },
+                {"medicalLeave","病假" },
+                {"noPayLeave","事假" },
+                {"offInLiue","换休 \n 小时）" },
+                {"awayForOfficialBusiness","公出" },
+                {"workInjuryLeave","工伤/产假 \n 小时" },
+                {"midShiftCount","中班" },
+                {"midShiftPay","中班费" },
+                {"nightShiftCount","夜班" },
+                {"nightShiftPay","夜班费" },
+                {"nightShiftMealAllowance","夜班餐费" },
+                {"miscAllowance","中夜班及误餐费" },
+                {"weekDayOverTime","延时" },
+                {"weekEndOverTime","双休" },
+                {"weekdayExceedOt","延时 \n（超)" },
+                {"weekEndExeedOt","双休 \n（超）" },
+                {"workedHoursByLaw","法定" },
+                {"remarks","备注" },
+            };
+
+            if (columns.ContainsKey(columnName))
+                return columns[columnName];
+
+            return columnName;
+        }
+
+        public string ApplyFinancialReportRowValueProxy(string current_value, string columName)
+        {
+            bool isEmpty = (string.IsNullOrEmpty(current_value) || current_value.Equals("0"));
+            if (isEmpty) return string.Empty;
+
+            return current_value;
+        }
+
+        public ICellStyle ApplyFinancialReportStyle(IWorkbook workbook, ISheet sheet, string columnName = "", int columnIndex = -1)
+        {
+
+            //DataTable overtimeReport = new DataTable(departmentRecords.TableName);
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("serialNo"),
+            //    new DataColumn("empName"),
+            //    new DataColumn("department"),
+            //    new DataColumn("weekDayOverTime"),
+            //    new DataColumn("weekEndOverTime"),
+            //    new DataColumn("nightShiftCount"),
+            //    new DataColumn("midShiftCount"),
+            //    new DataColumn("medicalLeave"),
+            //    new DataColumn("noPayLeave"),
+            //    new DataColumn("annualLeave"),
+            //    new DataColumn("offInLiue"),
+            //    new DataColumn("changeHour")
+            //});
+
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("workedHoursByLaw"),
+            //    new DataColumn("weekdayExceedOt"),
+            //    new DataColumn("weekEndExeedOt"),
+            //    new DataColumn("nightShiftPay"),
+            //    new DataColumn("nightShiftMealAllowance"),
+            //    new DataColumn("midShiftPay"),
+            //    new DataColumn("miscAllowance")
+            //});
+
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("awayForOfficialBusiness"),
+            //    new DataColumn("workInjuryLeave"),
+            //    new DataColumn("remarks")
+            //});
+            string[] special_columns = new string[] { "offInLiue", "midShiftCount", "weekDayOverTime", "weekEndOverTime" };
+            bool isSpecial = special_columns.Any(identifier => identifier.Equals(columnName));
+
+            IFont font = workbook.CreateFont();
+            if (isSpecial)
+                font.Color = IndexedColors.Red.Index;
+
+            if (columnIndex >= 0)
+                sheet.SetColumnWidth(columnIndex, 3000);
+
+            ICellStyle cellStyle = workbook.CreateCellStyle();
+            cellStyle.Alignment = HorizontalAlignment.Center;
+            cellStyle.VerticalAlignment = VerticalAlignment.Center;
+            cellStyle.WrapText = true;
+
+            cellStyle.SetFont(font);
+
+            return cellStyle;
         }
 
         public DataTable PrepareOvertimeReport(DateTime startDate, DateTime endDate, DataTable guardRoomRecords, DataTable departmentRecords)
@@ -179,19 +475,35 @@ namespace SF.AttendanceManagement
                 new DataColumn("offInLiue"),
                 new DataColumn("changeHour")
             });
+
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("workedHoursByLaw"),
+                new DataColumn("weekdayExceedOt"),
+                new DataColumn("weekEndExeedOt"),
+                new DataColumn("nightShiftPay"),
+                new DataColumn("nightShiftMealAllowance"),
+                new DataColumn("midShiftPay"),
+                new DataColumn("miscAllowance")
+            });
+
+            overtimeReport.Columns.AddRange(new DataColumn[] {
+                new DataColumn("awayForOfficialBusiness"),
+                new DataColumn("workInjuryLeave"),
+                new DataColumn("remarks")
+            });
             const int NAME_INDEX = 1;
 
             int serialNo = 1;
 
 
             string errorMsg = string.Empty;
-            decimal totalRecord = (departmentRecords.Rows.Count - 1);
+            decimal totalRecord = departmentRecords.Rows.Count;
             decimal transfer = 0;
-
+            decimal percentage = 0;
             foreach (DataRow departmentRecord in departmentRecords.Rows)
             {
                 int date_index = 2;
-                decimal percentage = (transfer / totalRecord) * 100;
+                percentage = (transfer / totalRecord) * 100;
 
                 string employeeName = string.Empty;
                 string departmentName = string.Empty;
@@ -210,7 +522,7 @@ namespace SF.AttendanceManagement
                 int rowIndex = departmentRecords.Rows.IndexOf(departmentRecord);
                 bool isHeaderIndex = departmentReportGeneratorService.IsDepartmetTemplateHeader(rowIndex);
 
-                logger.LogInformation("Processing {0} ({1} out of {2}) - {3}%", departmentRecords.TableName, transfer, totalRecord, percentage.ToString("0#"));
+                logger.LogInformation("Processing {0} ({1} out of {2}) - ({3}%)", departmentRecords.TableName, transfer, totalRecord, percentage.ToString("0#"));
 
                 if (!isHeaderIndex)
                 {
@@ -347,6 +659,10 @@ namespace SF.AttendanceManagement
                         tempRow["weekDayOverTime"] = adjustments[0];// adjust the weekday overtime
                         tempRow["weekEndOverTime"] = adjustments[1];// adjust the weekend overtime 
                         tempRow["changeHour"] = adjustments[2];// record change hour
+
+                        /*compute employee payements*/
+                        tempRow = ComputeEmployeeFee(tempRow);
+
                         /**
                          * TODO: 
                          * 1. Draft the first result to an excell file
@@ -360,8 +676,62 @@ namespace SF.AttendanceManagement
 
                 transfer++;
             }
+            logger.LogInformation("Processing {0} ({1} out of {2}) - ({3}%)", departmentRecords.TableName, transfer, totalRecord, percentage.ToString("0#"));
 
             return overtimeReport;
+        }
+
+        public DataRow ComputeEmployeeFee(DataRow employeeRecord)
+        {
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("workedHoursByLaw"), - temporarily set to 0
+            //    new DataColumn("weekdayExceedOt"), - after 36hours rule
+            //    new DataColumn("weekEndExeedOt"), - after 36hours rule
+            //    new DataColumn("nightShiftPay"), - done
+            //    new DataColumn("nightShiftMealAllowance"), - done
+            //    new DataColumn("midShiftPay"), - done
+            //    new DataColumn("miscAllowance") = done
+            //});
+
+            const decimal MID_SHIFT_PAY = 8;
+            const decimal NIGHT_SHIFT_PAY = 12;
+            const decimal NIGHT_MEAL_ALLOWANCE = 4;
+
+            decimal annualLeave = Decimal.Parse(employeeRecord["annualLeave"].ToString());
+            decimal medicalLeave = Decimal.Parse(employeeRecord["medicalLeave"].ToString());
+            decimal noPayLeave = Decimal.Parse(employeeRecord["noPayLeave"].ToString());
+            decimal offInLieu = Decimal.Parse(employeeRecord["offInLiue"].ToString());
+            decimal midShift = Decimal.Parse(employeeRecord["midShiftCount"].ToString());
+            decimal nightShift = Decimal.Parse(employeeRecord["nightShiftCount"].ToString());
+            decimal weekdayOt = Decimal.Parse(employeeRecord["weekDayOverTime"].ToString());
+            decimal weekendOt = Decimal.Parse(employeeRecord["weekEndOverTime"].ToString());
+
+            decimal midShiftPay = midShift * MID_SHIFT_PAY;
+            decimal nightShiftPay = nightShift * NIGHT_SHIFT_PAY;
+            decimal nightShiftMealAllowance = nightShift * NIGHT_MEAL_ALLOWANCE;
+            decimal miscAllowance = midShiftPay + nightShiftPay + nightShiftMealAllowance;
+
+
+            employeeRecord["workedHoursByLaw"] = 0;// temporarily set to 0
+            employeeRecord["weekdayExceedOt"] = 0;// temporarily set to 0, update after 36hours rule by applying the settlement
+            employeeRecord["weekEndExeedOt"] = 0;// temporarily set to 0, update after 36hours rule by applying the settlement
+
+            employeeRecord["nightShiftPay"] = nightShiftPay;
+            employeeRecord["midShiftPay"] = midShiftPay;
+            employeeRecord["nightShiftMealAllowance"] = nightShiftMealAllowance;
+            employeeRecord["miscAllowance"] = miscAllowance;
+
+            //overtimeReport.Columns.AddRange(new DataColumn[] {
+            //    new DataColumn("awayForOfficialBusiness"),
+            //    new DataColumn("workInjuryLeave"),
+            //    new DataColumn("remarks")
+            //});
+
+            employeeRecord["awayForOfficialBusiness"] = 0;
+            employeeRecord["workInjuryLeave"] = 0;
+            employeeRecord["remarks"] = string.Empty;
+
+            return employeeRecord;
         }
 
         public decimal[] ApplyOvertimeAdjustments(decimal week_day_overtime, decimal week_end_overtime, decimal off_in_liue)
@@ -383,10 +753,11 @@ namespace SF.AttendanceManagement
                 if (diff >= 0)
                     off_in_liue = 0;
             }
-            else {
+            else
+            {
                 diff = off_in_liue - week_end_overtime;
                 week_end_overtime = 0;
-                if(diff >= 0)
+                if (diff >= 0)
                 {
                     week_day_overtime = week_day_overtime - diff;
                     if (week_day_overtime >= 0)
@@ -517,7 +888,7 @@ namespace SF.AttendanceManagement
             if (!string.IsNullOrEmpty(inputModel.GuardRoomFilePath))
             {
                 string guardRoomFile = inputModel.GuardRoomFilePath;
-                string fileName = guardRoomFile.Substring(guardRoomFile.LastIndexOf(@"\") + 1);
+                string fileName = Path.GetFileName(guardRoomFile);
                 isValid = this.IsGuardRoomFileValid(guardRoomFile);
 
                 if (!isValid) errorMsg = string.Format("Guardroom file: {0} is incorrect format", fileName);
@@ -528,9 +899,9 @@ namespace SF.AttendanceManagement
             if (!string.IsNullOrEmpty(inputModel.SettlementFilePath))
             {
                 string settlementFile = inputModel.SettlementFilePath;
-                string fileName = settlementFile.Substring(settlementFile.LastIndexOf(@"\") + 1);
+                string fileName = Path.GetFileName(settlementFile);
 
-                isValid = this.IsSettlementFileValid(inputModel.SettlementFilePath);
+                isValid = this.IsSettlementFileValid(settlementFile);
 
                 if (!isValid) errorMsg = string.Format("Settlement file: {0} is incorrect format", fileName);
             }
@@ -682,4 +1053,5 @@ namespace SF.AttendanceManagement
             return isValid;
         }
     }
+
 }

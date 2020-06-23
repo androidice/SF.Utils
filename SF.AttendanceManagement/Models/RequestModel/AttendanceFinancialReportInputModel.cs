@@ -8,7 +8,7 @@ namespace SF.AttendanceManagement.Models.RequestModel
     public class AttendanceFinancialReportInputModel
     {
         [Required]
-        [Display(Name = "Report Date")]
+        [Display(Name = "Report Date")]//yyyy-MM-dd
         public string ReportDateString { get; set; }
 
         [Required]
@@ -17,6 +17,7 @@ namespace SF.AttendanceManagement.Models.RequestModel
 
         [Display(Name = "Settlement File")]
         public string SettlementFilePath { get; set; }
+
 
         [Display(Name = "Department Files")]
         public ICollection<string> DepartmentFilePaths { get; set; }
